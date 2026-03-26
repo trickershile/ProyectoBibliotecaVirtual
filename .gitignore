@@ -49,3 +49,7 @@ yarn-error.log*
 # Project specific
 .DS_Store
 Thumbs.db
+
+# Uploads
+backend-api/uploads/*
+!backend-api/uploads/.gitkeep
