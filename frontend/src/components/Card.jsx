@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+
 const Card = ({ title, description, category, author, imageUrl }) => {
   return (
     <div className="bg-gray-900 rounded-xl overflow-hidden shadow-xl border border-gray-700 flex flex-col h-full transition-transform hover:-translate-y-1 hover:shadow-2xl group">
@@ -6,7 +8,7 @@ const Card = ({ title, description, category, author, imageUrl }) => {
         <div className="w-2.5 h-2.5 rounded-full bg-red-500"></div>
         <div className="w-2.5 h-2.5 rounded-full bg-yellow-500"></div>
         <div className="w-2.5 h-2.5 rounded-full bg-green-500"></div>
-        <span className="text-gray-500 text-[10px] font-mono ml-2 uppercase tracking-tighter">book_preview.sh</span>
+        <span className="text-gray-500 text-[10px] font-mono ml-2 uppercase tracking-tighter">previsualizar_libro.sh</span>
       </div>
 
       {/* Book Image Section */}
@@ -34,10 +36,10 @@ const Card = ({ title, description, category, author, imageUrl }) => {
         </p>
 
         <div className="pt-4 border-t border-gray-800 flex items-center justify-between mt-auto text-[10px]">
-          <span className="text-yellow-400">author: "{author}"</span>
-          <button className="text-blue-400 hover:text-white transition-colors underline decoration-dotted">
-            ./open
-          </button>
+          <span className="text-yellow-400">autor: "{author}"</span>
+          <Link to="/catalogo" className="text-blue-400 hover:text-white transition-colors underline decoration-dotted">
+            ./abrir
+          </Link>
         </div>
       </div>
     </div>

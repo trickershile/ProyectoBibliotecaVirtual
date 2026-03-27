@@ -45,7 +45,7 @@ const Chat = () => {
               <rect x="15" y="75" width="70" height="15" rx="2" fill="white" stroke="black" strokeWidth="4" />
             </svg>
           </div>
-          <h2 className="text-sm font-bold ml-6 uppercase tracking-tighter">SOPORTE VIRTUAL</h2>
+          <h2 className="text-sm font-bold ml-6 uppercase tracking-tighter">AYUDA_SISTEMA</h2>
           <button 
             onClick={toggleChat} 
             className="absolute right-2 w-5 h-5 bg-red-500 border-2 border-t-red-300 border-l-red-300 border-r-red-800 border-b-red-800 text-white flex items-center justify-center font-bold text-xs"

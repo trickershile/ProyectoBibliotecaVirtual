@@ -68,7 +68,7 @@ const Home = () => {
           <h2 className="text-3xl font-bold text-white font-mono tracking-tighter uppercase border-l-4 border-blue-600 pl-4">
             {'//'} LIBROS DESTACADOS
           </h2>
-          <Button variant="outline">./ver_catalogo</Button>
+          <Button variant="outline" to="/catalogo">./ver_catalogo</Button>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 px-4">
@@ -94,7 +94,7 @@ const Home = () => {
           Crea tu cuenta en segundos y lleva tu biblioteca personal a todas partes.
         </p>
         <div className="flex justify-center">
-          <Button variant="primary" className="px-12 py-4 text-lg">./crear_cuenta_gratis</Button>
+          <Button variant="primary" className="px-12 py-4 text-lg" to="/register">./crear_cuenta_gratis</Button>
         </div>
       </section>
     </div>

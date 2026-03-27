@@ -41,13 +41,28 @@ const Navbar = () => {
               ./perfil
             </Link>
 
+            {/* Catálogo - Botón Púrpura/Cyan */}
+            <Link 
+              to="/catalogo" 
+              className="px-4 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/50 text-cyan-500 text-sm font-mono font-bold hover:bg-cyan-500 hover:text-black transition-all duration-300"
+            >
+              ./catalogo
+            </Link>
+
             <div className="h-6 w-[1px] bg-gray-700 mx-2"></div>
 
             <Link 
               to="/login"
-              className="bg-blue-600 text-white px-5 py-1.5 rounded-lg font-mono text-sm font-bold hover:bg-blue-700 hover:shadow-[0_0_15px_rgba(37,99,235,0.4)] transition-all"
+              className="text-blue-500 font-mono text-xs font-bold hover:text-blue-400 transition-colors"
             >
-              LOGIN
+              INICIAR_SESIÓN
+            </Link>
+
+            <Link 
+              to="/register"
+              className="bg-blue-600 text-white px-4 py-1.5 rounded-lg font-mono text-xs font-bold hover:bg-blue-700 hover:shadow-[0_0_15px_rgba(37,99,235,0.4)] transition-all"
+            >
+              REGISTRARSE
             </Link>
           </div>
         </div>
