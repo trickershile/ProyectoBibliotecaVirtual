@@ -1,0 +1,19 @@
+{
+  "name": "proyecto-biblioteca-virtual",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix frontend run dev",
+    "build": "npm --prefix frontend run build",
+    "preview": "npm --prefix frontend run preview",
+    "lint": "npm --prefix frontend run lint"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.27",
+    "postcss": "^8.5.8",
+    "tailwindcss": "^4.2.2"
+  },
+  "dependencies": {
+    "lucide-react": "^1.0.1",
+    "react-router-dom": "^7.13.2"
+  }
+}
