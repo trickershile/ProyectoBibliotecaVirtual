@@ -1,7 +1,6 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: postgres_db
     restart: always
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-user}
@@ -16,7 +15,6 @@ services:
 
   pgadmin:
     image: dpage/pgadmin4
-    container_name: pgadmin_panel
     restart: always
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@example.com}
@@ -30,7 +28,6 @@ services:
 
   mongo:
     image: mongo:latest
-    container_name: mongo_db
     restart: always
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:-root}
@@ -44,7 +41,6 @@ services:
 
   mongo-express:
     image: mongo-express
-    container_name: mongo_express_panel
     restart: always
     environment:
       ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_ROOT_USER:-root}
@@ -57,9 +53,21 @@ services:
     networks:
       - app-network
 
+  redis:
+    image: redis:7-alpine
+    restart: always
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - app-network
+
 volumes:
   postgres_data:
   mongo_data:
+  redis_data:
 
 networks:
   app-network:
