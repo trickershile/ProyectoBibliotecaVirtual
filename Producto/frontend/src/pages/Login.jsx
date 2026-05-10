@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Button from '../components/Button';
-import { loginUser } from '../api/auth';
+import { loginUser, startDemoSession } from '../api/auth';
 
 const Login = () => {
   const location = useLocation();
@@ -37,6 +37,12 @@ const Login = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDemoLogin = () => {
+    startDemoSession();
+    const redirectTo = location.state?.from?.pathname || '/perfil';
+    navigate(redirectTo, { replace: true });
   };
 
   return (
@@ -107,6 +113,24 @@ const Login = () => {
             </Button>
           </div>
         </form>
+
+        <div className="bg-gray-900/30 border border-gray-800 rounded-xl p-4 space-y-3 relative z-10">
+          <div className="flex items-center justify-between">
+            <p className="text-gray-300 text-xs font-mono uppercase tracking-widest">MODO_DEMO</p>
+            <span className="text-[10px] text-gray-500 font-mono">sin backend / sin bd</span>
+          </div>
+          <p className="text-gray-400 text-xs">
+            Entra con un usuario de prueba guardado en tu navegador para probar la edición y eliminación de cuenta.
+          </p>
+          <Button
+            type="button"
+            variant="secondary"
+            className="w-full py-3 text-sm"
+            onClick={handleDemoLogin}
+          >
+            ./entrar_en_modo_demo
+          </Button>
+        </div>
 
         <div className="text-center pt-4 border-t border-gray-800/50 relative z-10">
           <p className="text-gray-500 text-xs">
