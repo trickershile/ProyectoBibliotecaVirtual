@@ -41,7 +41,7 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a] p-4 font-sans">
+    <div className="flex items-center justify-center p-4 py-20 font-sans">
       <div className="w-full max-w-md bg-gray-900/50 border border-gray-800 rounded-2xl shadow-2xl p-8 space-y-8 relative overflow-hidden group">
         {/* Efecto de luz de fondo */}
         <div className="absolute -top-24 -right-24 w-48 h-48 bg-blue-600/10 rounded-full blur-3xl group-hover:bg-blue-600/20 transition-all duration-500"></div>

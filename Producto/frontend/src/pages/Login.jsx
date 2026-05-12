@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Button from '../components/Button';
-import { loginUser } from '../api/auth';
+import { loginUser, startDemoSession } from '../api/auth';
 
 const Login = () => {
   const location = useLocation();
@@ -30,7 +30,8 @@ const Login = () => {
       const data = await loginUser(formData);
       // Guardar token y redirigir
       localStorage.setItem('token', data.access_token);
-      navigate('/perfil');
+      const redirectTo = location.state?.from?.pathname || '/perfil';
+      navigate(redirectTo, { replace: true });
     } catch (err) {
       setError(err.message || 'Error en el inicio de sesión');
     } finally {
@@ -38,8 +39,14 @@ const Login = () => {
     }
   };
 
+  const handleDemoLogin = () => {
+    startDemoSession();
+    const redirectTo = location.state?.from?.pathname || '/perfil';
+    navigate(redirectTo, { replace: true });
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a] p-4">
+    <div className="flex items-center justify-center p-4 py-20">
       <div className="w-full max-w-md bg-gray-900/50 border border-gray-800 rounded-2xl shadow-2xl p-8 space-y-8 relative overflow-hidden group">
         {/* Efecto de luz de fondo */}
         <div className="absolute -top-24 -right-24 w-48 h-48 bg-blue-600/10 rounded-full blur-3xl group-hover:bg-blue-600/20 transition-all duration-500"></div>
@@ -106,6 +113,24 @@ const Login = () => {
             </Button>
           </div>
         </form>
+
+        <div className="bg-gray-900/30 border border-gray-800 rounded-xl p-4 space-y-3 relative z-10">
+          <div className="flex items-center justify-between">
+            <p className="text-gray-300 text-xs font-mono uppercase tracking-widest">MODO_DEMO</p>
+            <span className="text-[10px] text-gray-500 font-mono">sin backend / sin bd</span>
+          </div>
+          <p className="text-gray-400 text-xs">
+            Entra con un usuario de prueba guardado en tu navegador para probar la edición y eliminación de cuenta.
+          </p>
+          <Button
+            type="button"
+            variant="secondary"
+            className="w-full py-3 text-sm"
+            onClick={handleDemoLogin}
+          >
+            ./entrar_en_modo_demo
+          </Button>
+        </div>
 
         <div className="text-center pt-4 border-t border-gray-800/50 relative z-10">
           <p className="text-gray-500 text-xs">

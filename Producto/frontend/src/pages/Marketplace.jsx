@@ -1,78 +1,95 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { ShoppingCart } from 'lucide-react';
 
 const Marketplace = () => {
+  const addToCart = (book) => {
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    if (!cart.find(item => item.id === book.id)) {
+      const updatedCart = [...cart, book];
+      localStorage.setItem('cart', JSON.stringify(updatedCart));
+      // Notificar al Navbar
+      window.dispatchEvent(new Event('storage'));
+      alert(`[SISTEMA]: Libro agregado al carrito.`);
+    } else {
+      alert('[SISTEMA]: El libro ya se encuentra en el carrito.');
+    }
+  };
   // Mock data with new filter fields
   const mockBooks = [
     {
       id: 1,
       title: "Clean Code",
       author: "Robert C. Martin",
-      description: "Un manual de artesanía de software ágil. Esencial para cualquier desarrollador.",
+      editorial: "Prentice Hall",
+      pages: 464,
+      image: "https://images.unsplash.com/photo-1516116216624-53e697fedbea?auto=format&fit=crop&q=80&w=300&h=450",
+      description: "En un mundo saturado de software deficiente, emerge una guía definitiva. No es solo un libro; es el manifiesto que separa a los programadores de los verdaderos artesanos.",
       is_new: true,
       price: 25000,
-      rating: 4.8,
       sales_count: 150,
       publication_date: "2008-08-01",
-      status: "available", // available, loaned
-      delivery_type: "Retiro en biblioteca", // Retiro en biblioteca, Coordinar con vecino
-      owner_type: "Municipalidad de Maipú", // Municipalidad de Maipú, Colección Privada
+      status: "available",
+      delivery_type: "Retiro en biblioteca",
+      owner_type: "Biblioteca Municipal de Maipú",
       pickup_location: "Plaza de Maipú",
-      category: "Ensayos",
+      category: "Ciencia Ficción",
+      mood: "Para leer en un día",
       language: "Español",
       educational_level: "Universitario",
-      physical_condition: "Nuevo",
-      seller: { id: 101, username: "biblioteca_central" }
+      physical_condition: "Nuevo"
     },
     {
       id: 2,
       title: "Papelucho",
       author: "Marcela Paz",
-      description: "Clásico de la literatura infantil chilena.",
+      editorial: "Editorial Universitaria",
+      pages: 120,
+      image: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=300&h=450",
+      description: "Un diario secreto, un niño con una imaginación desbordante y las travesuras que marcaron a toda una generación chilena.",
       is_new: false,
       price: 5000,
-      rating: 4.9,
       sales_count: 500,
       publication_date: "1947-01-01",
       status: "loaned",
-      delivery_type: "Coordinar con vecino",
-      owner_type: "Colección Privada",
+      delivery_type: "Retiro en biblioteca",
+      owner_type: "Biblioteca Municipal de Maipú",
       pickup_location: "Ciudad Satélite",
-      category: "Literatura Infantil",
+      category: "Fantasía",
+      mood: "Para viajar",
       language: "Español",
       educational_level: "Básica",
-      physical_condition: "Usado (Excelente estado)",
-      seller: { id: 102, username: "vecino_maipu" }
+      physical_condition: "Usado (Excelente estado)"
     },
     {
       id: 3,
       title: "Algebra de Baldor",
       author: "Aurelio Baldor",
-      description: "Texto escolar esencial para matemáticas.",
+      editorial: "Patria",
+      pages: 576,
+      image: "https://images.unsplash.com/photo-1543004218-ee14110497f9?auto=format&fit=crop&q=80&w=300&h=450",
+      description: "El terror de las aulas convertido en la llave maestra del conocimiento universal. Domina el lenguaje de los números.",
       is_new: false,
       price: 15000,
-      rating: 4.5,
       sales_count: 300,
       publication_date: "2010-01-01",
       status: "available",
       delivery_type: "Retiro en biblioteca",
-      owner_type: "Municipalidad de Maipú",
+      owner_type: "Biblioteca Municipal de Maipú",
       pickup_location: "Hospital El Carmen",
-      category: "Textos Escolares",
+      category: "Terror",
+      mood: "Libros para llorar",
       language: "Español",
       educational_level: "Media",
-      physical_condition: "Usado (Con marcas de uso)",
-      seller: { id: 103, username: "biblioteca_hospital" }
+      physical_condition: "Usado (Con marcas de uso)"
     }
   ];
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({
     status: 'all',
-    delivery_type: 'all',
-    owner_type: 'all',
     pickup_location: 'all',
     category: 'all',
+    mood: 'all',
     language: 'all',
     educational_level: 'all',
     physical_condition: 'all',
@@ -90,10 +107,9 @@ const Marketplace = () => {
     setSearchTerm('');
     setFilters({
       status: 'all',
-      delivery_type: 'all',
-      owner_type: 'all',
       pickup_location: 'all',
       category: 'all',
+      mood: 'all',
       language: 'all',
       educational_level: 'all',
       physical_condition: 'all',
@@ -106,20 +122,17 @@ const Marketplace = () => {
     const matchesSearch = book.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           book.author.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = filters.status === 'all' || book.status === filters.status;
-    const matchesDelivery = filters.delivery_type === 'all' || book.delivery_type === filters.delivery_type;
-    const matchesOwner = filters.owner_type === 'all' || book.owner_type === filters.owner_type;
     const matchesLocation = filters.pickup_location === 'all' || book.pickup_location === filters.pickup_location;
     const matchesCategory = filters.category === 'all' || book.category === filters.category;
+    const matchesMood = filters.mood === 'all' || book.mood === filters.mood;
     const matchesLanguage = filters.language === 'all' || book.language === filters.language;
     const matchesEducation = filters.educational_level === 'all' || book.educational_level === filters.educational_level;
     const matchesCondition = filters.physical_condition === 'all' || book.physical_condition === filters.physical_condition;
 
-    return matchesSearch && matchesStatus && matchesDelivery && matchesOwner && 
-           matchesLocation && matchesCategory && matchesLanguage && matchesEducation && matchesCondition;
+    return matchesSearch && matchesStatus && matchesLocation && matchesCategory && matchesMood && matchesLanguage && matchesEducation && matchesCondition;
   }).sort((a, b) => {
     if (filters.sortBy === 'date') return new Date(b.publication_date) - new Date(a.publication_date);
     if (filters.sortBy === 'sales') return b.sales_count - a.sales_count;
-    if (filters.sortBy === 'rating') return b.rating - a.rating;
     return 0;
   });
 
@@ -130,9 +143,9 @@ const Marketplace = () => {
         {/* Header Section */}
         <div className="border-b border-gray-800 pb-6">
           <h1 className="text-4xl font-bold tracking-tighter uppercase text-blue-500">
-            {'>'} CATÁLOGO_MARKETPLACE
+            {'>'} CATÁLOGO_BIBLIOTECA
           </h1>
-          <p className="text-gray-400 mt-2">Sistema de intercambio y venta de conocimiento_</p>
+          <p className="text-gray-400 mt-2">Venta oficial de libros de la biblioteca_</p>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-6">
@@ -177,38 +190,9 @@ const Marketplace = () => {
                   <option value="loaned">En préstamo</option>
                 </select>
               </div>
-
-              <div>
-                <label className="block text-gray-500 text-[9px] font-bold mb-1 uppercase tracking-widest">TIPO_ENTREGA</label>
-                <select 
-                  name="delivery_type" 
-                  value={filters.delivery_type}
-                  onChange={handleFilterChange} 
-                  className="w-full bg-black/50 border border-gray-700 rounded-lg px-3 py-1.5 text-[11px]"
-                >
-                  <option value="all">Todos</option>
-                  <option value="Retiro en biblioteca">Retiro biblioteca</option>
-                  <option value="Coordinar con vecino">Vecino (C2C)</option>
-                </select>
-              </div>
             </div>
 
-            {/* Origin */}
             <div className="space-y-3 pt-3 border-t border-gray-800">
-              <div>
-                <label className="block text-gray-500 text-[9px] font-bold mb-1 uppercase tracking-widest">PROPIETARIO</label>
-                <select 
-                  name="owner_type" 
-                  value={filters.owner_type}
-                  onChange={handleFilterChange} 
-                  className="w-full bg-black/50 border border-gray-700 rounded-lg px-3 py-1.5 text-[11px]"
-                >
-                  <option value="all">Todos</option>
-                  <option value="Municipalidad de Maipú">Municipalidad</option>
-                  <option value="Colección Privada">Vecinos</option>
-                </select>
-              </div>
-
               <div>
                 <label className="block text-gray-500 text-[9px] font-bold mb-1 uppercase tracking-widest">UBICACIÓN_RETIRO</label>
                 <select 
@@ -237,11 +221,26 @@ const Marketplace = () => {
                   className="w-full bg-black/50 border border-gray-700 rounded-lg px-3 py-1.5 text-[11px]"
                 >
                   <option value="all">Todas</option>
-                  <option value="Literatura Infantil">Infantil</option>
-                  <option value="Textos Escolares">Escolares</option>
+                  <option value="Fantasía">Fantasía</option>
+                  <option value="Terror">Terror</option>
+                  <option value="Ciencia Ficción">Ciencia Ficción</option>
                   <option value="Novelas">Novelas</option>
                   <option value="Ensayos">Ensayos</option>
-                  <option value="Ciencia Ficción">Ciencia Ficción</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-gray-500 text-[9px] font-bold mb-1 uppercase tracking-widest">MOOD / ÁNIMO</label>
+                <select 
+                  name="mood" 
+                  value={filters.mood}
+                  onChange={handleFilterChange} 
+                  className="w-full bg-black/50 border border-gray-700 rounded-lg px-3 py-1.5 text-[11px] text-blue-400 font-bold"
+                >
+                  <option value="all">Todos los moods</option>
+                  <option value="Libros para llorar">Libros para llorar</option>
+                  <option value="Para leer en un día">Para leer en un día</option>
+                  <option value="Para viajar">Para viajar</option>
                 </select>
               </div>
 
@@ -291,7 +290,6 @@ const Marketplace = () => {
               >
                 <option value="date">Fecha</option>
                 <option value="sales">Ventas</option>
-                <option value="rating">Valoración</option>
               </select>
             </div>
           </aside>
@@ -306,94 +304,87 @@ const Marketplace = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
               {filteredBooks.map((book) => (
-                <div key={book.id} className="group relative bg-gray-900/30 border border-gray-800 rounded-2xl p-6 hover:border-blue-500/50 transition-all duration-300 flex flex-col h-full overflow-hidden">
-                  {/* Status Badges */}
-                  <div className="flex gap-2 absolute top-4 right-4 z-10">
-                    <div className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${book.status === 'available' ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}`}>
-                      {book.status === 'available' ? 'DISPONIBLE' : 'EN PRÉSTAMO'}
-                    </div>
-                    <div className="px-2 py-0.5 rounded bg-blue-500/20 text-blue-500 text-[10px] font-bold uppercase">
-                      {book.category}
-                    </div>
-                  </div>
-
-                  {/* Title & Author */}
-                  <div className="mb-4">
-                    <h3 className="text-xl font-bold text-white group-hover:text-blue-400 transition-colors truncate pr-24">
-                      {book.title}
-                    </h3>
-                    <p className="text-gray-500 text-sm">{book.author}</p>
-                  </div>
-
-                  {/* Details Grid */}
-                  <div className="grid grid-cols-2 gap-y-3 mb-6 text-[10px]">
-                    <div>
-                      <span className="text-gray-500 block uppercase">ORIGEN</span>
-                      <span className="text-gray-300">{book.owner_type}</span>
-                    </div>
-                    <div>
-                      <span className="text-gray-500 block uppercase">UBICACIÓN</span>
-                      <span className="text-gray-300">{book.pickup_location}</span>
-                    </div>
-                    <div>
-                      <span className="text-gray-500 block uppercase">ENTREGA</span>
-                      <span className="text-gray-300">{book.delivery_type}</span>
-                    </div>
-                    <div>
-                      <span className="text-gray-500 block uppercase">CONDICIÓN</span>
-                      <span className="text-gray-300">{book.physical_condition}</span>
-                    </div>
-                  </div>
-
-                  {/* Description */}
-                  <p className="text-gray-400 text-sm line-clamp-2 mb-6 flex-grow italic border-l-2 border-gray-800 pl-4">
-                    "{book.description}"
-                  </p>
-
-                  {/* Stats & Metadata */}
-                  <div className="flex justify-between items-center mb-6 border-y border-gray-800/50 py-3">
-                    <div className="flex gap-4 text-[10px]">
-                      <div>
-                        <span className="text-gray-500 block uppercase">VALORACIÓN</span>
-                        <span className="text-blue-400 font-bold">★ {book.rating}</span>
+                <div 
+                  key={book.id} 
+                  className="group relative bg-gray-900/40 border border-gray-800 rounded-xl overflow-hidden hover:border-blue-500/50 transition-all duration-500 hover:shadow-[0_0_20px_rgba(59,130,246,0.15)] flex flex-col h-full transform hover:-translate-y-1"
+                >
+                  {/* Image Container */}
+                  <div className="relative h-48 overflow-hidden">
+                    <img 
+                      src={book.image} 
+                      alt={book.title}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent opacity-60"></div>
+                    
+                    {/* Badge */}
+                    {book.is_new && (
+                      <div className="absolute top-2 left-2 px-2 py-0.5 bg-blue-600 text-[8px] font-bold text-white rounded-full uppercase tracking-tighter shadow-lg animate-pulse">
+                        NUEVO_INGRESO
                       </div>
-                      <div>
-                        <span className="text-gray-500 block uppercase">IDIOMA</span>
-                        <span className="text-gray-300">{book.language}</span>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-gray-500 block uppercase text-[10px]">PRECIO</span>
-                      <span className="text-lg font-bold text-white">${book.price.toLocaleString()}</span>
+                    )}
+
+                    {/* Status Overlay */}
+                    <div className={`absolute top-2 right-2 px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-tighter ${
+                      book.status === 'available' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                    }`}>
+                      {book.status === 'available' ? 'DISPONIBLE' : 'PRESTADO'}
                     </div>
                   </div>
 
-                  {/* Footer Section: Seller & Actions */}
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
+                  <div className="p-4 flex flex-col flex-grow">
+                    {/* Title & Author */}
+                    <div className="mb-3">
+                      <h3 className="text-sm font-bold text-white group-hover:text-blue-400 transition-colors line-clamp-1 font-mono uppercase tracking-tighter">
+                        {book.title}
+                      </h3>
+                      <p className="text-[10px] text-gray-500 font-medium italic">por {book.author}</p>
+                    </div>
+
+                    {/* Quick Specs */}
+                    <div className="grid grid-cols-2 gap-2 mb-3 text-[9px] border-y border-gray-800/50 py-2">
                       <div className="flex flex-col">
-                        <span className="text-gray-500 text-[10px] uppercase">IDENTIDAD_VENDEDOR</span>
-                        <span className="text-sm font-bold text-gray-300">@{book.seller.username}</span>
+                        <span className="text-gray-600 uppercase tracking-tighter">EDITORIAL</span>
+                        <span className="text-gray-400 font-bold truncate">{book.editorial}</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-gray-600 uppercase tracking-tighter">GÉNERO</span>
+                        <span className="text-blue-500/70 font-bold truncate">{book.category}</span>
                       </div>
                     </div>
 
-                    <div className="flex gap-2">
-                      <Link 
-                        to={`/perfil/${book.seller.username}`}
-                        className="flex-1 text-center py-2 rounded-lg bg-gray-800 text-gray-400 text-xs font-bold hover:bg-gray-700 transition-all border border-gray-700"
-                      >
-                        ./ver_perfil
-                      </Link>
+                    {/* Sinopsis Atrapante (Compacta) */}
+                    <p className="text-[10px] text-gray-400 line-clamp-2 italic mb-4 leading-relaxed flex-grow">
+                      "{book.description}"
+                    </p>
+
+                    {/* Price & Action */}
+                    <div className="mt-auto pt-3 flex items-center justify-between border-t border-gray-800/50">
+                      <div className="flex flex-col">
+                        <span className="text-[8px] text-gray-600 uppercase">PRECIO_VALOR</span>
+                        <span className="text-sm font-bold text-white font-mono">
+                          ${book.price.toLocaleString('es-CL')}
+                        </span>
+                      </div>
                       <button 
-                        disabled={book.status !== 'available'}
-                        className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${book.status === 'available' ? 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-[0_0_10px_rgba(37,99,235,0.3)]' : 'bg-gray-800 text-gray-600 cursor-not-allowed'}`}
-                      >
-                        {book.status === 'available' ? './adquirir_bien' : './en_prestamo'}
-                      </button>
+                      onClick={() => addToCart(book)}
+                      disabled={book.status !== 'available'}
+                      className={`p-2 rounded-lg transition-all duration-300 ${
+                        book.status === 'available' 
+                        ? 'bg-blue-600/10 text-blue-500 border border-blue-500/30 hover:bg-blue-600 hover:text-white hover:shadow-[0_0_10px_rgba(59,130,246,0.5)]' 
+                        : 'bg-gray-800 text-gray-600 border border-gray-700 cursor-not-allowed'
+                      }`}
+                      title="Agregar al carrito"
+                    >
+                      <ShoppingCart className="w-4 h-4" />
+                    </button>
                     </div>
                   </div>
+
+                  {/* Hover Reveal Info */}
+                  <div className="absolute inset-x-0 bottom-0 bg-blue-600 h-1 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500"></div>
                 </div>
               ))}
             </div>
