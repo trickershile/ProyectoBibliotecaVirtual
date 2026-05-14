@@ -13,6 +13,14 @@ class UserCreate(UserBase):
     phone_number: Optional[str] = None
     address: Optional[str] = None
 
+class UserUpdate(BaseModel):
+    email: Optional[EmailStr] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    phone_number: Optional[str] = None
+    address: Optional[str] = None
+    password: Optional[str] = None
+
 class UserOut(UserBase):
     id: int
     role: UserRole

@@ -1,20 +1,7 @@
-const API_URL = 'http://localhost:8000/api/v1/auth';
+import apiClient from './apiClient';
 
 export const registerUser = async (userData) => {
-  const response = await fetch(`${API_URL}/register`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(userData),
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.detail || 'Error en el registro');
-  }
-
-  return response.json();
+  return apiClient.post('/auth/register', userData);
 };
 
 export const loginUser = async (credentials) => {
@@ -22,15 +9,15 @@ export const loginUser = async (credentials) => {
   formData.append('username', credentials.username);
   formData.append('password', credentials.password);
 
-  const response = await fetch(`${API_URL}/login`, {
-    method: 'POST',
-    body: formData,
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.detail || 'Error en el inicio de sesión');
-  }
-
-  return response.json();
+  // Usamos el método upload de apiClient porque envía FormData sin setear Content-Type manual
+  return apiClient.upload('/auth/login', formData);
 };
+
+export const getUser = async (userId) => {
+  return apiClient.get(`/auth/${userId}`);
+};
+
+export const updateUser = async (userId, userData) => {
+  return apiClient.put(`/auth/${userId}`, userData);
+};
+

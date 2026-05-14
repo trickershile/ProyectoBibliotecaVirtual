@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from ...core.database import get_db
 from ...core.security import get_password_hash, create_access_token, verify_password
 from ...models.user import User
-from ...schemas.user import UserCreate, UserOut, Token
+from ...schemas.user import UserCreate, UserOut, Token, UserUpdate
 from fastapi.security import OAuth2PasswordRequestForm
 
 router = APIRouter()
@@ -34,6 +34,31 @@ async def register(user_in: UserCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_user)
     return new_user
+
+@router.get("/{user_id}", response_model=UserOut)
+async def get_user(user_id: int, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+
+@router.put("/{user_id}", response_model=UserOut)
+async def update_user(user_id: int, user_in: UserUpdate, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    update_data = user_in.model_dump(exclude_unset=True)
+    
+    if "password" in update_data:
+        update_data["hashed_password"] = get_password_hash(update_data.pop("password"))
+        
+    for field, value in update_data.items():
+        setattr(user, field, value)
+        
+    db.commit()
+    db.refresh(user)
+    return user
 
 @router.post("/login", response_model=Token)
 async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):

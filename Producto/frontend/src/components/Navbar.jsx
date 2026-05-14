@@ -5,17 +5,26 @@ const Navbar = () => {
   const navigate = useNavigate();
   const isLoggedIn = Boolean(localStorage.getItem('token'));
   const [cartCount, setCartCount] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
 
   const updateCartCount = () => {
     const cart = JSON.parse(localStorage.getItem('cart') || '[]');
     setCartCount(cart.length);
+    
+    // Activar animación
+    setIsAnimating(true);
+    setTimeout(() => setIsAnimating(false), 300);
   };
 
   useEffect(() => {
     updateCartCount();
-    // Escuchar cambios en el localStorage
+    // Escuchar cambios en el localStorage y evento personalizado
     window.addEventListener('storage', updateCartCount);
-    return () => window.removeEventListener('storage', updateCartCount);
+    window.addEventListener('cart-updated', updateCartCount);
+    return () => {
+      window.removeEventListener('storage', updateCartCount);
+      window.removeEventListener('cart-updated', updateCartCount);
+    };
   }, []);
 
   const handleLogout = () => {
@@ -61,7 +70,7 @@ const Navbar = () => {
               to="/catalogo" 
               className="px-4 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/50 text-cyan-500 text-sm font-mono font-bold hover:bg-cyan-500 hover:text-black transition-all duration-300"
             >
-              ./explorar
+              ./catálogo
             </Link>
 
             {/* Reseñas - Nuevo Botón */}
@@ -80,16 +89,23 @@ const Navbar = () => {
               ./contacto
             </Link>
 
+            <Link 
+              to="/vender" 
+              className="px-4 py-1.5 rounded-full bg-gray-800 border border-gray-700 text-gray-400 text-sm font-mono font-bold hover:bg-white hover:text-black transition-all duration-300"
+            >
+              ./gestión
+            </Link>
+
             {/* Carrito - Nuevo Botón */}
             <Link 
               to="/carrito" 
-              className="relative p-2 rounded-full bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700 transition-all duration-300"
+              className={`relative p-2 rounded-full bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700 transition-all duration-300 ${isAnimating ? 'scale-125 text-blue-400' : 'scale-100'}`}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
               {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center shadow-lg border border-gray-900">
+                <span className={`absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center shadow-lg border border-gray-900 transition-transform duration-300 ${isAnimating ? 'scale-150' : 'scale-100'}`}>
                   {cartCount}
                 </span>
               )}

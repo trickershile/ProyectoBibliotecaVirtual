@@ -1,8 +1,10 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Layout from './components/Layout';
+import Toast from './components/Toast';
 import Home from './pages/Home';
-import Marketplace from './pages/Marketplace';
+import Catalogo from './pages/Catalogo';
 import Login from './pages/Login';
+import GestionLibros from './pages/GestionLibros';
 import Register from './pages/Register';
 import Perfil from './pages/Perfil';
 import Cart from './pages/Cart';
@@ -27,7 +29,8 @@ function App() {
         {/* Rutas con Navbar y Footer */}
         <Route path="/" element={<Layout />}>
           <Route index element={<Home />} />
-          <Route path="catalogo" element={<Marketplace />} />
+          <Route path="catalogo" element={<Catalogo />} />
+          <Route path="vender" element={<GestionLibros />} />
           <Route
             path="perfil"
             element={
@@ -46,6 +49,7 @@ function App() {
         {/* Aquí puedes añadir una ruta para página no encontrada (404) */}
         {/* <Route path="*" element={<NotFound />} /> */}
       </Routes>
+      <Toast />
     </BrowserRouter>
   );
 }

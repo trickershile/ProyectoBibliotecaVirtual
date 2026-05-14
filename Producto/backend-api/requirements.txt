@@ -12,3 +12,6 @@ openai
 faiss-cpu
 python-dotenv
 pydantic-settings
+fpdf2
+fastapi-mail
+email-validator
