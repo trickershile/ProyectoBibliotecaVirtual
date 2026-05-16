@@ -1,36 +1,58 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { clearAuthStorage, signOut } from '../lib/supabase';
+import { getCartCount } from '../lib/cart';
 
 const Navbar = () => {
   const navigate = useNavigate();
-  const isLoggedIn = Boolean(localStorage.getItem('token'));
+  const [sbUser, setSbUser] = useState(null);
+  const [sbProfile, setSbProfile] = useState(null);
   const [cartCount, setCartCount] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
 
-  const updateCartCount = () => {
-    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-    setCartCount(cart.length);
-    
-    // Activar animación
-    setIsAnimating(true);
-    setTimeout(() => setIsAnimating(false), 300);
-  };
-
   useEffect(() => {
+    const user = JSON.parse(localStorage.getItem('sb_user') || 'null');
+    const profile = JSON.parse(localStorage.getItem('sb_profile') || 'null');
+    setSbUser(user);
+    setSbProfile(profile);
+    
+    const updateCartCount = () => {
+      setCartCount(getCartCount());
+      setIsAnimating(true);
+      setTimeout(() => setIsAnimating(false), 300);
+    };
+    
     updateCartCount();
-    // Escuchar cambios en el localStorage y evento personalizado
     window.addEventListener('storage', updateCartCount);
     window.addEventListener('cart-updated', updateCartCount);
+    
+    const handleStorageChange = () => {
+      const updatedUser = JSON.parse(localStorage.getItem('sb_user') || 'null');
+      const updatedProfile = JSON.parse(localStorage.getItem('sb_profile') || 'null');
+      setSbUser(updatedUser);
+      setSbProfile(updatedProfile);
+    };
+    window.addEventListener('sb_user_updated', handleStorageChange);
+    
     return () => {
       window.removeEventListener('storage', updateCartCount);
       window.removeEventListener('cart-updated', updateCartCount);
+      window.removeEventListener('sb_user_updated', handleStorageChange);
     };
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
+  const handleLogout = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+    clearAuthStorage();
     navigate('/');
   };
+
+  const isLoggedIn = Boolean(sbUser);
+  const isAdmin = sbProfile?.role === 'admin';
 
   return (
     <nav className="bg-gray-900 border-b border-gray-800 sticky top-0 z-50">
@@ -48,7 +70,6 @@ const Navbar = () => {
           </div>
           
           <div className="hidden md:flex items-center space-x-4">
-            {/* Inicio - Botón Rojo */}
             <Link 
               to="/" 
               className="px-4 py-1.5 rounded-full bg-red-500/10 border border-red-500/50 text-red-500 text-sm font-mono font-bold hover:bg-red-500 hover:text-white transition-all duration-300"
@@ -65,7 +86,6 @@ const Navbar = () => {
               </Link>
             )}
 
-            {/* Catálogo - Botón Púrpura/Cyan */}
             <Link 
               to="/catalogo" 
               className="px-4 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/50 text-cyan-500 text-sm font-mono font-bold hover:bg-cyan-500 hover:text-black transition-all duration-300"
@@ -73,7 +93,6 @@ const Navbar = () => {
               ./catálogo
             </Link>
 
-            {/* Reseñas - Nuevo Botón */}
             <Link 
               to="/resenas" 
               className="px-4 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/50 text-purple-500 text-sm font-mono font-bold hover:bg-purple-500 hover:text-white transition-all duration-300"
@@ -81,7 +100,6 @@ const Navbar = () => {
               ./reseñas
             </Link>
 
-            {/* Contacto - Nuevo Botón */}
             <Link 
               to="/contacto" 
               className="px-4 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/50 text-orange-500 text-sm font-mono font-bold hover:bg-orange-500 hover:text-white transition-all duration-300"
@@ -89,14 +107,15 @@ const Navbar = () => {
               ./contacto
             </Link>
 
-            <Link 
-              to="/vender" 
-              className="px-4 py-1.5 rounded-full bg-gray-800 border border-gray-700 text-gray-400 text-sm font-mono font-bold hover:bg-white hover:text-black transition-all duration-300"
-            >
-              ./gestión
-            </Link>
+            {isLoggedIn && isAdmin && (
+              <Link 
+                to="/vender" 
+                className="px-4 py-1.5 rounded-full bg-gray-800 border border-gray-700 text-gray-400 text-sm font-mono font-bold hover:bg-white hover:text-black transition-all duration-300"
+              >
+                ./gestión
+              </Link>
+            )}
 
-            {/* Carrito - Nuevo Botón */}
             <Link 
               to="/carrito" 
               className={`relative p-2 rounded-full bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700 transition-all duration-300 ${isAnimating ? 'scale-125 text-blue-400' : 'scale-100'}`}

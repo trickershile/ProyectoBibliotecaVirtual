@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { ShoppingCart, Trash2, ArrowRight, CreditCard, Clock, Info, CheckCircle2, Download, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ordersApi } from '../api/orders';
+import { withApiOrigin } from '../lib/supabase';
+import { clearCart, getCart, removeCartItem } from '../lib/cart';
 
 const Cart = () => {
   const [cartItems, setCartItems] = useState([]);
@@ -9,15 +11,12 @@ const Cart = () => {
   const [orderSuccess, setOrderSuccess] = useState(null);
 
   useEffect(() => {
-    const savedCart = JSON.parse(localStorage.getItem('cart') || '[]');
-    setCartItems(savedCart);
+    setCartItems(getCart());
   }, []);
 
   const removeItem = (id) => {
-    const updatedCart = cartItems.filter(item => (item._id || item.id) !== id);
+    const updatedCart = removeCartItem(id);
     setCartItems(updatedCart);
-    localStorage.setItem('cart', JSON.stringify(updatedCart));
-    window.dispatchEvent(new Event('cart-updated'));
     window.dispatchEvent(new CustomEvent('show-toast', { 
       detail: { message: `Ejemplar removido del sistema_` } 
     }));
@@ -30,11 +29,15 @@ const Cart = () => {
   const handleConfirmOrder = async () => {
     setLoading(true);
     try {
-      // Para efectos de demo usamos user_id: 1 si no hay token
-      const userId = 1; 
+      const sbUser = JSON.parse(localStorage.getItem('sb_user') || 'null');
+      if (!sbUser) {
+        window.dispatchEvent(new CustomEvent('show-toast', { 
+          detail: { message: "[!] Debes iniciar sesión para confirmar el pedido_" } 
+        }));
+        return;
+      }
       
       const orderData = {
-        user_id: userId,
         items: cartItems.map(item => ({
           book_id: item._id || item.id,
           title: item.title,
@@ -47,14 +50,14 @@ const Cart = () => {
       const result = await ordersApi.create(orderData);
       setOrderSuccess(result);
       
-      // Limpiar carrito
-      localStorage.removeItem('cart');
+      clearCart();
       setCartItems([]);
-      window.dispatchEvent(new Event('cart-updated'));
       
     } catch (error) {
       console.error("Error al procesar pedido:", error);
-      alert("[SISTEMA]: Error al confirmar el pedido. Revisa la conexión.");
+      window.dispatchEvent(new CustomEvent('show-toast', { 
+        detail: { message: "[!] Error al confirmar el pedido_" } 
+      }));
     } finally {
       setLoading(false);
     }
@@ -80,7 +83,7 @@ const Cart = () => {
               <p className="text-xs text-gray-300">Descarga tu recibo para el retiro en sede_</p>
             </div>
             <a 
-              href={`http://localhost:8000${orderSuccess.receipt_url}`}
+              href={withApiOrigin(orderSuccess.receipt_url)}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-3 px-6 py-3 bg-white text-black font-black text-[10px] rounded-xl hover:bg-blue-500 hover:text-white transition-all uppercase tracking-widest shadow-xl"
@@ -104,7 +107,6 @@ const Cart = () => {
     <div className="min-h-screen bg-[#0a0a0a] text-white p-6 font-mono">
       <div className="max-w-5xl mx-auto space-y-8">
         
-        {/* Header */}
         <div className="border-b border-gray-800 pb-6">
           <h1 className="text-4xl font-bold tracking-tighter uppercase text-blue-500 flex items-center gap-3">
             <ShoppingCart className="w-8 h-8" /> {'>'} CARRITO_DE_COMPRAS
@@ -133,7 +135,6 @@ const Cart = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* List of Items */}
             <div className="lg:col-span-2 space-y-4">
               <div className="bg-gray-900/30 border border-gray-800 rounded-2xl overflow-hidden">
                 <div className="p-4 border-b border-gray-800 bg-gray-900/50 flex justify-between items-center">
@@ -145,7 +146,7 @@ const Cart = () => {
                     <div key={item._id || item.id} className="p-4 flex gap-4 group hover:bg-white/5 transition-all">
                       <div className="w-16 h-20 bg-black rounded-lg overflow-hidden border border-gray-800 flex-shrink-0">
                         <img 
-                          src={item.image_url ? `http://localhost:8000${item.image_url}` : "https://via.placeholder.com/150x200?text=BOOK"} 
+                          src={item.image_url ? withApiOrigin(item.image_url) : "https://via.placeholder.com/150x200?text=BOOK"} 
                           alt={item.title} 
                           className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
                         />
@@ -178,7 +179,6 @@ const Cart = () => {
                 </div>
               </div>
 
-              {/* Security Info */}
               <div className="flex items-start gap-3 p-4 bg-blue-500/5 border border-blue-500/20 rounded-2xl">
                 <Info className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
                 <div className="space-y-1">
@@ -190,7 +190,6 @@ const Cart = () => {
               </div>
             </div>
 
-            {/* Order Summary */}
             <div className="space-y-4">
               <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6 space-y-6 sticky top-24 shadow-2xl">
                 <h2 className="text-[11px] font-black text-white uppercase tracking-[0.2em] border-b border-gray-800 pb-3">RESUMEN_ORDEN</h2>
@@ -221,7 +220,7 @@ const Cart = () => {
                   <button 
                     onClick={handleConfirmOrder}
                     disabled={loading}
-                    className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 shadow-[0_0_30px_rgba(37,99,235,0.2)] hover:scale-[1.02]"
+                    className="w-full py-4 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 shadow-[0_0_30px_rgba(37,99,235,0.2)] hover:scale-[1.02]"
                   >
                     {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
                     CONFIRMAR_PEDIDO
@@ -242,4 +241,3 @@ const Cart = () => {
 };
 
 export default Cart;
-

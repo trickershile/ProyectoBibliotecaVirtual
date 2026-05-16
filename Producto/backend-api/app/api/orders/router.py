@@ -1,8 +1,10 @@
-from fastapi import APIRouter, HTTPException, status, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from typing import List
 from ...core.database import mongo_db
+from ...core.security import get_current_profile
 from ...schemas.order import OrderCreate, OrderOut
 from bson import ObjectId
+from pymongo.errors import PyMongoError
 from datetime import datetime
 from fpdf import FPDF
 import os
@@ -11,8 +13,6 @@ import uuid
 router = APIRouter()
 
 RECEIPTS_DIR = "uploads/receipts"
-if not os.path.exists(RECEIPTS_DIR):
-    os.makedirs(RECEIPTS_DIR)
 
 class ReceiptPDF(FPDF):
     def header(self):
@@ -61,26 +61,77 @@ def generate_receipt_pdf(order_data: dict, filename: str):
     pdf.output(os.path.join(RECEIPTS_DIR, filename))
 
 @router.post("/", response_model=OrderOut, status_code=status.HTTP_201_CREATED)
-async def create_order(order_in: OrderCreate, background_tasks: BackgroundTasks):
-    order_dict = order_in.model_dump()
-    order_dict["_id"] = str(ObjectId())
-    order_dict["created_at"] = datetime.utcnow()
-    order_dict["status"] = "confirmed"
-    
-    # Generar nombre de archivo PDF
-    filename = f"comprobante_{order_dict['_id']}.pdf"
-    order_dict["receipt_url"] = f"/static/receipts/{filename}"
-    
-    # Guardar en Mongo
-    await mongo_db.orders.insert_one(order_dict)
-    
-    # Generar PDF en segundo plano
-    background_tasks.add_task(generate_receipt_pdf, order_dict, filename)
-    
-    return order_dict
+async def create_order(
+    order_in: OrderCreate,
+    background_tasks: BackgroundTasks,
+    profile=Depends(get_current_profile),
+):
+    try:
+        if order_in.user_id and order_in.user_id != str(profile.id):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="user_id no coincide con la sesión")
+
+        if not order_in.items:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="items no puede estar vacío")
+
+        for item in order_in.items:
+            if item.price < 0:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="price inválido")
+
+        computed_total = sum(item.price for item in order_in.items)
+
+        order_dict = order_in.model_dump()
+        order_dict["_id"] = str(ObjectId())
+        order_dict["user_id"] = str(profile.id)
+        order_dict["total_amount"] = computed_total
+        order_dict["created_at"] = datetime.utcnow()
+        order_dict["status"] = "confirmed"
+        
+        # Generar nombre de archivo PDF
+        filename = f"comprobante_{order_dict['_id']}.pdf"
+        order_dict["receipt_url"] = f"/static/receipts/{filename}"
+        
+        # Guardar en Mongo
+        await mongo_db.orders.insert_one(order_dict)
+        
+        # Generar PDF en segundo plano
+        background_tasks.add_task(generate_receipt_pdf, order_dict, filename)
+        
+        return order_dict
+    except PyMongoError as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error creating order: {str(e)}"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"General error: {str(e)}"
+        )
+
+@router.get("/me", response_model=List[OrderOut])
+async def get_my_orders(profile=Depends(get_current_profile)):
+    try:
+        cursor = mongo_db.orders.find({"user_id": str(profile.id)}).sort("created_at", -1)
+        orders = await cursor.to_list(length=50)
+        return orders
+    except PyMongoError as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Database error: {str(e)}"
+        )
+
 
 @router.get("/{user_id}", response_model=List[OrderOut])
-async def get_user_orders(user_id: int):
-    cursor = mongo_db.orders.find({"user_id": user_id}).sort("created_at", -1)
-    orders = await cursor.to_list(length=50)
-    return orders
+async def get_user_orders(user_id: str, profile=Depends(get_current_profile)):
+    try:
+        if profile.role != "admin" and user_id != str(profile.id):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acceso denegado")
+
+        cursor = mongo_db.orders.find({"user_id": user_id}).sort("created_at", -1)
+        orders = await cursor.to_list(length=50)
+        return orders
+    except PyMongoError as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Database error: {str(e)}"
+        )

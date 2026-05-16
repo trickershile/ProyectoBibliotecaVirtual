@@ -10,5 +10,5 @@ class WishlistItem(BaseModel):
     added_at: datetime = Field(default_factory=datetime.utcnow)
 
 class WishlistOut(BaseModel):
-    user_id: int
+    user_id: str
     items: List[WishlistItem] = []

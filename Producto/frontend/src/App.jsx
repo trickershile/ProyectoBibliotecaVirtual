@@ -11,12 +11,18 @@ import Cart from './pages/Cart';
 import Reviews from './pages/Reviews';
 import Contact from './pages/Contact';
 
-const ProtectedRoute = ({ children }) => {
+const ProtectedRoute = ({ children, requireAdmin = false }) => {
   const location = useLocation();
-  const isLoggedIn = Boolean(localStorage.getItem('token'));
+  const sbUser = JSON.parse(localStorage.getItem('sb_user') || 'null');
+  const sbProfile = JSON.parse(localStorage.getItem('sb_profile') || 'null');
+  const isLoggedIn = Boolean(sbUser);
 
   if (!isLoggedIn) {
     return <Navigate to="/login" replace state={{ from: location }} />;
+  }
+
+  if (requireAdmin && sbProfile?.role !== 'admin') {
+    return <Navigate to="/" replace />;
   }
 
   return children;
@@ -26,11 +32,17 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Rutas con Navbar y Footer */}
         <Route path="/" element={<Layout />}>
           <Route index element={<Home />} />
           <Route path="catalogo" element={<Catalogo />} />
-          <Route path="vender" element={<GestionLibros />} />
+          <Route 
+            path="vender" 
+            element={
+              <ProtectedRoute requireAdmin={true}>
+                <GestionLibros />
+              </ProtectedRoute>
+            } 
+          />
           <Route
             path="perfil"
             element={
@@ -45,9 +57,6 @@ function App() {
           <Route path="resenas" element={<Reviews />} />
           <Route path="contacto" element={<Contact />} />
         </Route>
-
-        {/* Aquí puedes añadir una ruta para página no encontrada (404) */}
-        {/* <Route path="*" element={<NotFound />} /> */}
       </Routes>
       <Toast />
     </BrowserRouter>

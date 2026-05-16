@@ -1,12 +1,16 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+import { API_BASE_URL } from '../lib/supabase';
 
 const apiClient = {
   async fetch(endpoint, options = {}) {
     const url = `${API_BASE_URL}${endpoint}`;
+    const accessToken = localStorage.getItem('sb_access_token') || localStorage.getItem('token');
     const headers = {
       'Content-Type': 'application/json',
       ...options.headers,
     };
+    if (accessToken && !headers.Authorization) {
+      headers.Authorization = `Bearer ${accessToken}`;
+    }
 
     const config = {
       ...options,
@@ -52,10 +56,16 @@ const apiClient = {
 
   async upload(endpoint, formData, options = {}) {
     const url = `${API_BASE_URL}${endpoint}`;
+    const accessToken = localStorage.getItem('sb_access_token') || localStorage.getItem('token');
+    const headers = { ...options.headers };
+    if (accessToken && !headers.Authorization) {
+      headers.Authorization = `Bearer ${accessToken}`;
+    }
     const config = {
       ...options,
       method: 'POST',
       body: formData,
+      headers,
       // No seteamos Content-Type para que el navegador ponga el boundary correcto
     };
 

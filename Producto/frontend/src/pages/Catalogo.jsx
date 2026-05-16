@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Book, Search, Loader2, Info, ShoppingCart } from 'lucide-react';
 import { booksApi } from '../api/books';
+import { withApiOrigin } from '../lib/supabase';
+import { addCartItem } from '../lib/cart';
 
 const Catalogo = () => {
   const [books, setBooks] = useState([]);
@@ -10,7 +12,7 @@ const Catalogo = () => {
   
   const [filters, setFilters] = useState({
     pickup_location: 'all',
-    category: 'all',
+    categories: 'all',
     educational_level: 'all',
     sort_by: 'date'
   });
@@ -27,6 +29,14 @@ const Catalogo = () => {
         status: 'available', // Forzamos solo libros disponibles para venta
         search: searchTerm || undefined
       };
+      
+      // Ajustar categories para que sea un array si no es 'all'
+      if (params.categories && params.categories !== 'all') {
+        params.categories = [params.categories];
+      } else {
+        delete params.categories;
+      }
+
       const data = await booksApi.getAll(params);
       setBooks(data);
       setError(null);
@@ -39,19 +49,18 @@ const Catalogo = () => {
   };
 
   const addToCart = (book) => {
-    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-    const bookId = book._id || book.id;
-    if (!cart.find(item => (item._id || item.id) === bookId)) {
-      const updatedCart = [...cart, book];
-      localStorage.setItem('cart', JSON.stringify(updatedCart));
-      // Notificar al Navbar y mostrar Toast
-      window.dispatchEvent(new Event('cart-updated'));
+    const result = addCartItem(book);
+    if (result.added) {
       window.dispatchEvent(new CustomEvent('show-toast', { 
         detail: { message: `"${book.title}" añadido al sistema de compra_` } 
       }));
-    } else {
+    } else if (result.reason === 'duplicate') {
       window.dispatchEvent(new CustomEvent('show-toast', { 
         detail: { message: `[!] El ejemplar ya se encuentra en el carrito_` } 
+      }));
+    } else {
+      window.dispatchEvent(new CustomEvent('show-toast', { 
+        detail: { message: `[!] No se pudo agregar el ejemplar al carrito_` } 
       }));
     }
   };
@@ -67,7 +76,7 @@ const Catalogo = () => {
     setSearchTerm('');
     setFilters({
       pickup_location: 'all',
-      category: 'all',
+      categories: 'all',
       educational_level: 'all',
       sort_by: 'date'
     });
@@ -178,8 +187,8 @@ const Catalogo = () => {
               <div>
                 <label className="block text-gray-500 text-[9px] font-bold mb-1 uppercase tracking-widest">ÁREA_TEMÁTICA</label>
                 <select 
-                  name="category" 
-                  value={filters.category}
+                  name="categories" 
+                  value={filters.categories}
                   onChange={handleFilterChange} 
                   className="w-full bg-black/50 border border-gray-700 rounded-lg px-3 py-2 text-[11px] outline-none"
                 >
@@ -260,7 +269,7 @@ const Catalogo = () => {
                     {/* Image Container */}
                     <div className="relative h-72 overflow-hidden bg-black/40">
                       <img 
-                        src={book.image_url ? `http://localhost:8000${book.image_url}` : "https://via.placeholder.com/300x450?text=LIBRO+NUEVO"} 
+                        src={book.image_url ? withApiOrigin(book.image_url) : "https://via.placeholder.com/300x450?text=LIBRO+NUEVO"} 
                         alt={book.title}
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                       />

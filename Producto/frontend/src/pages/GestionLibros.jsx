@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import { booksApi } from '../api/books';
 import { Edit2, Trash2, Plus, Loader2, Search, X, Check, Upload } from 'lucide-react';
+import { withApiOrigin } from '../lib/supabase';
 
 const GestionLibros = () => {
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [editingBook, setEditingBook] = useState(null);
-  const [showForm, setShowShowForm] = useState(false);
+  const [showForm, setShowForm] = useState(false);
   const [imageFile, setImageFile] = useState(null);
   
   const [formData, setFormData] = useState({
@@ -49,7 +51,23 @@ const GestionLibros = () => {
       status: book.status || 'available',
       is_new: book.is_new ?? true
     });
-    setShowShowForm(true);
+    setShowForm(true);
+  };
+
+  const openNewBookForm = () => {
+    setEditingBook(null);
+    setFormData({
+      title: '',
+      author: '',
+      price: 0,
+      description: '',
+      pickup_location: 'Plaza de Maipú',
+      categories: ['General'],
+      status: 'available',
+      is_new: true
+    });
+    setImageFile(null);
+    setShowForm(true);
   };
 
   const handleDelete = async (id) => {
@@ -66,13 +84,23 @@ const GestionLibros = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (submitting) return;
+
     try {
+      setSubmitting(true);
       let savedBook;
+      
+      // Asegurar que el precio sea un número válido
+      const finalFormData = {
+        ...formData,
+        price: Number(formData.price) || 0
+      };
+
       if (editingBook) {
-        savedBook = await booksApi.update(editingBook._id || editingBook.id, formData);
+        savedBook = await booksApi.update(editingBook._id || editingBook.id, finalFormData);
         window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: "Información actualizada_" } }));
       } else {
-        savedBook = await booksApi.create(formData);
+        savedBook = await booksApi.create(finalFormData);
         window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: "Nuevo libro registrado_" } }));
       }
 
@@ -80,12 +108,17 @@ const GestionLibros = () => {
         await booksApi.uploadImage(savedBook._id || savedBook.id, imageFile);
       }
 
-      setShowShowForm(false);
+      setShowForm(false);
       setEditingBook(null);
       setImageFile(null);
       fetchBooks();
     } catch (err) {
       console.error("Error al guardar:", err);
+      window.dispatchEvent(new CustomEvent('show-toast', { 
+        detail: { message: "[!] Error al guardar los cambios_" } 
+      }));
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -106,7 +139,7 @@ const GestionLibros = () => {
             <p className="text-gray-500 text-xs mt-1 italic">Administración central de ejemplares nuevos_</p>
           </div>
           <button 
-            onClick={() => { setEditingBook(null); setFormData({ title: '', author: '', price: 0, description: '', pickup_location: 'Plaza de Maipú', categories: ['General'], status: 'available', is_new: true }); setShowShowForm(true); }}
+            onClick={openNewBookForm}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-[10px] font-black transition-all shadow-lg shadow-blue-600/20"
           >
             <Plus className="w-4 h-4" /> REGISTRAR_NUEVO_ACTIVO
@@ -146,7 +179,7 @@ const GestionLibros = () => {
                 <tr key={book._id || book.id} className="hover:bg-white/5 transition-all group">
                   <td className="px-6 py-4">
                     <div className="w-12 h-16 bg-black rounded border border-gray-800 overflow-hidden">
-                      <img src={book.image_url ? `http://localhost:8000${book.image_url}` : "https://via.placeholder.com/100x150"} className="w-full h-full object-cover opacity-70 group-hover:opacity-100 transition-opacity" alt="" />
+                      <img src={book.image_url ? withApiOrigin(book.image_url) : "https://via.placeholder.com/100x150"} className="w-full h-full object-cover opacity-70 group-hover:opacity-100 transition-opacity" alt="" />
                     </div>
                   </td>
                   <td className="px-6 py-4">
@@ -173,7 +206,7 @@ const GestionLibros = () => {
             <div className="bg-gray-900 border border-gray-800 rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl">
               <div className="p-6 border-b border-gray-800 flex justify-between items-center bg-gray-900/50">
                 <h2 className="text-xl font-black uppercase tracking-tighter">{editingBook ? 'EDITAR_ACTIVO' : 'NUEVO_ACTIVO'}</h2>
-                <button onClick={() => setShowShowForm(false)} className="text-gray-500 hover:text-white"><X className="w-6 h-6" /></button>
+                <button onClick={() => setShowForm(false)} className="text-gray-500 hover:text-white"><X className="w-6 h-6" /></button>
               </div>
               <form onSubmit={handleSubmit} className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
@@ -201,6 +234,17 @@ const GestionLibros = () => {
                     </select>
                   </div>
                   <div>
+                    <label className="text-[9px] font-black text-gray-600 uppercase mb-1 block">ÁREA_TEMÁTICA</label>
+                    <select className="w-full bg-black border border-gray-800 rounded-xl px-4 py-2 text-xs focus:border-blue-500 outline-none" value={formData.categories[0]} onChange={e => setFormData({...formData, categories: [e.target.value]})}>
+                      <option value="General">General</option>
+                      <option value="Historia">Historia</option>
+                      <option value="Educación">Educación</option>
+                      <option value="Literatura">Literatura</option>
+                      <option value="Ciencia">Ciencia</option>
+                      <option value="Infantil">Infantil</option>
+                    </select>
+                  </div>
+                  <div>
                     <label className="text-[9px] font-black text-gray-600 uppercase mb-1 block">DESCRIPCIÓN</label>
                     <textarea rows="3" className="w-full bg-black border border-gray-800 rounded-xl px-4 py-2 text-xs focus:border-blue-500 outline-none resize-none" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
                   </div>
@@ -215,9 +259,18 @@ const GestionLibros = () => {
                   </div>
                 </div>
                 <div className="md:col-span-2 pt-4 flex justify-end gap-3">
-                  <button type="button" onClick={() => setShowShowForm(false)} className="px-6 py-2 border border-gray-800 rounded-xl text-[10px] font-bold uppercase hover:bg-white/5 transition-all text-gray-500">CANCELAR</button>
-                  <button type="submit" className="px-8 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-[10px] font-black transition-all flex items-center gap-2">
-                    <Check className="w-4 h-4" /> {editingBook ? 'GUARDAR_CAMBIOS' : 'REGISTRAR_ACTIVO'}
+                  <button type="button" onClick={() => setShowForm(false)} className="px-6 py-2 border border-gray-800 rounded-xl text-[10px] font-bold uppercase hover:bg-white/5 transition-all text-gray-500">CANCELAR</button>
+                  <button 
+                    type="submit" 
+                    disabled={submitting}
+                    className="px-8 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded-xl text-[10px] font-black transition-all flex items-center gap-2"
+                  >
+                    {submitting ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Check className="w-4 h-4" />
+                    )}
+                    {editingBook ? 'GUARDAR_CAMBIOS' : 'REGISTRAR_ACTIVO'}
                   </button>
                 </div>
               </form>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ordersApi } from '../api/orders';
-import { getUser, updateUser } from '../api/auth';
+import { getProfile, updateProfile, withApiOrigin } from '../lib/supabase';
 import { User, Package, Download, Calendar, MapPin, Clock, Loader2, AlertCircle, Edit3, Check, X } from 'lucide-react';
 
 const Perfil = () => {
@@ -9,10 +9,9 @@ const Perfil = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [editForm, setEditEditForm] = useState({
+  const [editForm, setEditForm] = useState({
     first_name: '',
     last_name: '',
-    email: '',
     address: '',
     phone_number: ''
   });
@@ -24,25 +23,27 @@ const Perfil = () => {
 
   const fetchProfileData = async () => {
     try {
-      // Demo: Usamos ID 1 por defecto
-      const data = await getUser(1);
+      const sbUser = JSON.parse(localStorage.getItem('sb_user') || 'null');
+      if (!sbUser) return;
+
+      const data = await getProfile(sbUser.id);
       setUserData(data);
-      setEditEditForm({
+      setEditForm({
         first_name: data.first_name || '',
         last_name: data.last_name || '',
-        email: data.email || '',
         address: data.address || '',
         phone_number: data.phone_number || ''
       });
     } catch (err) {
       console.error("Error al cargar perfil:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
   const fetchOrders = async () => {
     try {
-      // Demo: Usamos ID 1 por defecto
-      const data = await ordersApi.getByUser(1);
+      const data = await ordersApi.getMy();
       setOrders(data);
     } catch (err) {
       console.error("Error al cargar pedidos:", err);
@@ -56,13 +57,15 @@ const Perfil = () => {
     e.preventDefault();
     try {
       setLoading(true);
-      const updated = await updateUser(1, editForm);
+      const sbUser = JSON.parse(localStorage.getItem('sb_user') || 'null');
+      if (!sbUser) return;
+
+      const updated = await updateProfile(sbUser.id, editForm);
       setUserData(updated);
       setIsEditing(false);
       window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: "Perfil actualizado correctamente_" } }));
     } catch (err) {
       console.error("Error al actualizar:", err);
-      alert("Error al actualizar el perfil.");
     } finally {
       setLoading(false);
     }
@@ -80,7 +83,6 @@ const Perfil = () => {
     <div className="min-h-screen bg-[#0a0a0a] text-white p-6 font-mono">
       <div className="max-w-5xl mx-auto space-y-10">
         
-        {/* Header Perfil */}
         <div className="flex flex-col md:flex-row items-center gap-8 border-b border-gray-800 pb-10">
           <div className="relative group">
             <div className="w-32 h-32 bg-blue-600/20 rounded-full flex items-center justify-center border-2 border-blue-500/50 group-hover:border-blue-500 transition-all">
@@ -104,7 +106,6 @@ const Perfil = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
-          {/* Columna Izquierda: Info Usuario / Formulario Edición */}
           <div className="space-y-6">
             <div className="bg-gray-900/30 border border-gray-800 rounded-2xl p-6 space-y-6">
               <div className="flex justify-between items-center border-b border-gray-800 pb-3">
@@ -120,19 +121,19 @@ const Perfil = () => {
                 <form onSubmit={handleUpdateProfile} className="space-y-4">
                   <div className="space-y-1">
                     <label className="text-[8px] text-gray-600 font-bold uppercase tracking-widest">Nombre</label>
-                    <input className="w-full bg-black border border-gray-800 rounded-lg px-3 py-2 text-xs focus:border-blue-500 outline-none" value={editForm.first_name} onChange={e => setEditEditForm({...editForm, first_name: e.target.value})} />
+                    <input className="w-full bg-black border border-gray-800 rounded-lg px-3 py-2 text-xs focus:border-blue-500 outline-none" value={editForm.first_name} onChange={e => setEditForm({...editForm, first_name: e.target.value})} />
                   </div>
                   <div className="space-y-1">
                     <label className="text-[8px] text-gray-600 font-bold uppercase tracking-widest">Apellido</label>
-                    <input className="w-full bg-black border border-gray-800 rounded-lg px-3 py-2 text-xs focus:border-blue-500 outline-none" value={editForm.last_name} onChange={e => setEditEditForm({...editForm, last_name: e.target.value})} />
+                    <input className="w-full bg-black border border-gray-800 rounded-lg px-3 py-2 text-xs focus:border-blue-500 outline-none" value={editForm.last_name} onChange={e => setEditForm({...editForm, last_name: e.target.value})} />
                   </div>
                   <div className="space-y-1">
                     <label className="text-[8px] text-gray-600 font-bold uppercase tracking-widest">Correo</label>
-                    <input className="w-full bg-black border border-gray-800 rounded-lg px-3 py-2 text-xs focus:border-blue-500 outline-none" value={editForm.email} onChange={e => setEditEditForm({...editForm, email: e.target.value})} />
+                    <input className="w-full bg-black border border-gray-800 rounded-lg px-3 py-2 text-xs focus:border-blue-500 outline-none" value={userData?.email} disabled />
                   </div>
                   <div className="space-y-1">
                     <label className="text-[8px] text-gray-600 font-bold uppercase tracking-widest">Dirección</label>
-                    <input className="w-full bg-black border border-gray-800 rounded-lg px-3 py-2 text-xs focus:border-blue-500 outline-none" value={editForm.address} onChange={e => setEditEditForm({...editForm, address: e.target.value})} />
+                    <input className="w-full bg-black border border-gray-800 rounded-lg px-3 py-2 text-xs focus:border-blue-500 outline-none" value={editForm.address} onChange={e => setEditForm({...editForm, address: e.target.value})} />
                   </div>
                   <div className="flex gap-2 pt-2">
                     <button type="button" onClick={() => setIsEditing(false)} className="flex-1 py-2 border border-gray-800 rounded-lg text-[9px] font-bold uppercase hover:bg-red-500/10 text-gray-500 hover:text-red-500 transition-all flex items-center justify-center gap-2">
@@ -165,7 +166,6 @@ const Perfil = () => {
             </div>
           </div>
 
-          {/* Columna Derecha: Historial de Pedidos */}
           <div className="lg:col-span-2 space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-bold tracking-tighter uppercase text-white flex items-center gap-3">
@@ -190,14 +190,13 @@ const Perfil = () => {
               <div className="space-y-4">
                 {orders.map((order) => (
                   <div key={order._id} className="bg-gray-900/30 border border-gray-800 rounded-2xl overflow-hidden hover:border-blue-500/30 transition-all group">
-                    {/* Header Pedido */}
                     <div className="p-4 bg-gray-900/50 border-b border-gray-800 flex flex-wrap justify-between items-center gap-4">
                       <div className="flex items-center gap-4">
                         <div className="p-2 bg-blue-500/10 rounded-lg">
                           <Clock className="w-4 h-4 text-blue-400" />
                         </div>
                         <div>
-                          <p className="text-[10px] font-black text-white uppercase tracking-tighter">SOLICITUD #{order._id.substr(-6)}</p>
+                          <p className="text-[10px] font-black text-white uppercase tracking-tighter">SOLICITUD #{order._id?.substr(-6) || order.id}</p>
                           <p className="text-[8px] text-gray-500 font-bold">{new Date(order.created_at).toLocaleDateString()} {new Date(order.created_at).toLocaleTimeString()}</p>
                         </div>
                       </div>
@@ -207,32 +206,33 @@ const Perfil = () => {
                         }`}>
                           {order.status}
                         </span>
-                        <a 
-                          href={`http://localhost:8000${order.receipt_url}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-2 bg-white text-black rounded-lg hover:bg-blue-500 hover:text-white transition-all shadow-lg"
-                          title="Descargar Comprobante PDF"
-                        >
-                          <Download className="w-4 h-4" />
-                        </a>
+                        {order.receipt_url && (
+                          <a 
+                            href={withApiOrigin(order.receipt_url)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-2 bg-white text-black rounded-lg hover:bg-blue-500 hover:text-white transition-all shadow-lg"
+                            title="Descargar Comprobante PDF"
+                          >
+                            <Download className="w-4 h-4" />
+                          </a>
+                        )}
                       </div>
                     </div>
 
-                    {/* Detalle Pedido */}
                     <div className="p-4 divide-y divide-gray-800/50">
-                      {order.items.map((item, idx) => (
+                      {order.items?.map((item, idx) => (
                         <div key={idx} className="py-2 flex justify-between items-center text-[10px]">
                           <div className="flex flex-col">
                             <span className="text-gray-300 font-bold uppercase">{item.title}</span>
                             <span className="text-gray-600 text-[8px] font-bold italic">Sede: {item.pickup_location}</span>
                           </div>
-                          <span className="text-white font-mono">${item.price.toLocaleString('es-CL')}</span>
+                          <span className="text-white font-mono">${item.price?.toLocaleString('es-CL')}</span>
                         </div>
                       ))}
                       <div className="pt-3 mt-1 flex justify-between items-center">
                         <span className="text-[9px] text-gray-500 font-black uppercase tracking-widest">TOTAL_TRANSACCIÓN</span>
-                        <span className="text-sm font-black text-green-500">${order.total_amount.toLocaleString('es-CL')}</span>
+                        <span className="text-sm font-black text-green-500">${order.total_amount?.toLocaleString('es-CL')}</span>
                       </div>
                     </div>
                   </div>
@@ -247,4 +247,3 @@ const Perfil = () => {
 };
 
 export default Perfil;
-

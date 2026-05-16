@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Button from '../components/Button';
-import { registerUser } from '../api/auth';
+import { signUp } from '../lib/supabase';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -30,9 +30,15 @@ const Register = () => {
     setLoading(true);
 
     try {
-      await registerUser(formData);
-      // Éxito: Redirigir al login
-      navigate('/login', { state: { message: 'Registro completado. Por favor inicia sesión.' } });
+      await signUp(formData.email, formData.password, {
+        username: formData.username,
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        phone_number: formData.phone_number,
+        address: formData.address
+      });
+      
+      navigate('/login', { state: { message: 'Registro completado. Por favor verifica tu correo electrónico.' } });
     } catch (err) {
       setError(err.message || 'Error al procesar el registro');
     } finally {
@@ -43,7 +49,6 @@ const Register = () => {
   return (
     <div className="flex items-center justify-center p-4 py-20 font-sans">
       <div className="w-full max-w-md bg-gray-900/50 border border-gray-800 rounded-2xl shadow-2xl p-8 space-y-8 relative overflow-hidden group">
-        {/* Efecto de luz de fondo */}
         <div className="absolute -top-24 -right-24 w-48 h-48 bg-blue-600/10 rounded-full blur-3xl group-hover:bg-blue-600/20 transition-all duration-500"></div>
         
         <div className="text-center relative z-10">
@@ -162,6 +167,7 @@ const Register = () => {
               className="w-full bg-black/50 border border-gray-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-mono text-sm"
               placeholder="••••••••"
               required
+              minLength={6}
             />
           </div>
 

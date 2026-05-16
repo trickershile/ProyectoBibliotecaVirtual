@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, Boolean, Enum
+from sqlalchemy import Column, Integer, String, Boolean
+from sqlalchemy.dialects.postgresql import UUID
 from ..core.database import Base
 import enum
 
@@ -19,3 +20,16 @@ class User(Base):
     address = Column(String, nullable=True)
     role = Column(String, default=UserRole.SOCIO)
     is_active = Column(Boolean, default=True)
+
+
+class Profile(Base):
+    __tablename__ = "profiles"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, index=True)
+    username = Column(String, unique=True, index=True, nullable=True)
+    email = Column(String, unique=True, index=True, nullable=True)
+    first_name = Column(String, nullable=True)
+    last_name = Column(String, nullable=True)
+    phone_number = Column(String, nullable=True)
+    address = Column(String, nullable=True)
+    role = Column(String, default=UserRole.SOCIO)
