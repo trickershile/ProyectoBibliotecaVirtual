@@ -1,66 +1,119 @@
 services:
+  api_gateway:
+    build: ./backend_services/api_gateway
+    container_name: api_gateway
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      SECRET_KEY: ${SECRET_KEY:-dev_secret_key_change_me}
+      ALGORITHM: ${ALGORITHM:-HS256}
+      SUPABASE_URL: ${SUPABASE_URL:-}
+    depends_on:
+      - auth_service
+      - inventory_service
+      - orders_sales_service
+      - c2c_chat_service
+    networks:
+      - back-network
+
+  auth_service:
+    build: ./backend_services/auth_service
+    container_name: auth_service
+    restart: always
+    environment:
+      POSTGRES_URL: ${POSTGRES_URL:-postgresql+asyncpg://postgres:postgres@postgres:5432/bookstore}
+      SECRET_KEY: ${SECRET_KEY:-dev_secret_key_change_me}
+      ALGORITHM: ${ALGORITHM:-HS256}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - back-network
+
+  inventory_service:
+    build: ./backend_services/inventory_service
+    container_name: inventory_service
+    restart: always
+    environment:
+      MONGO_URI: ${MONGO_URI:-mongodb://root:rootpassword123@mongodb:27017/inventory?authSource=admin}
+    depends_on:
+      - mongodb
+    networks:
+      - back-network
+
+  orders_sales_service:
+    build: ./backend_services/orders_sales_service
+    container_name: orders_sales_service
+    restart: always
+    environment:
+      POSTGRES_URL: ${POSTGRES_URL:-postgresql+asyncpg://postgres:postgres@postgres:5432/bookstore}
+      INVENTORY_SERVICE_URL: ${INVENTORY_SERVICE_URL:-http://inventory_service:8002}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      inventory_service:
+        condition: service_started
+    networks:
+      - back-network
+
+  c2c_chat_service:
+    build: ./backend_services/c2c_chat_service
+    container_name: c2c_chat_service
+    restart: always
+    networks:
+      - back-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis_broker
+    restart: always
+    expose:
+      - "6379"
+    networks:
+      - back-network
+
   postgres:
     image: postgres:16-alpine
     container_name: postgres_db
     restart: always
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
-      POSTGRES_DB: ${POSTGRES_DB:-biblioteca_virtual}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-bookstore}
+    expose:
+      - "5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-bookstore}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
     networks:
-      - app-network
+      - back-network
 
-  pgadmin:
-    image: dpage/pgadmin4
-    container_name: pgadmin_panel
-    restart: always
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@example.com}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
-    ports:
-      - "5050:80"
-    depends_on:
-      - postgres
-    networks:
-      - app-network
-
-  mongo:
-    image: mongo:latest
-    container_name: mongo_db
+  mongodb:
+    image: mongo:7
+    container_name: mongodb
     restart: always
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:-root}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-rootpassword}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-rootpassword123}
+    expose:
+      - "27017"
     volumes:
       - mongo_data:/data/db
-    ports:
-      - "27017:27017"
     networks:
-      - app-network
-
-  mongo-express:
-    image: mongo-express
-    container_name: mongo_express_panel
-    restart: always
-    environment:
-      ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_ROOT_USER:-root}
-      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_ROOT_PASSWORD:-rootpassword}
-      ME_CONFIG_MONGODB_SERVER: mongo
-    ports:
-      - "8081:8081"
-    depends_on:
-      - mongo
-    networks:
-      - app-network
+      - back-network
 
 volumes:
-  postgres_data:
   mongo_data:
+  postgres_data:
 
 networks:
-  app-network:
+  back-network:
     driver: bridge
