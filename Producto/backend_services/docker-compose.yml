@@ -1,0 +1,238 @@
+services:
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  api_gateway:
+    build:
+      context: .
+      dockerfile: api_gateway/Dockerfile
+    env_file:
+      - .env
+    environment:
+      - AUTH_SERVICE_URL=http://auth_service:8000
+      - CATALOG_SERVICE_URL=http://catalog_service:8001
+      - IA_SERVICE_URL=ws://ia_recommender:8002
+      - ORDERS_SERVICE_URL=http://orders_service:8003
+      - SHIPPING_SERVICE_URL=http://shipping_service:8004
+      - PAYMENT_SERVICE_URL=http://payment_service:8005
+      - CART_SERVICE_URL=http://cart_service:8006
+      - NOTIFICATION_SERVICE_URL=http://notification_service:8007
+      - SEARCH_SERVICE_URL=http://search_service:8008
+      - INVENTORY_SYNC_SERVICE_URL=http://inventory_sync_service:8009
+      - DIGITAL_DELIVERY_SERVICE_URL=http://digital_delivery_service:8010
+      - REVIEWS_SERVICE_URL=http://reviews_service:8012
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    ports:
+      - "8080:8080"
+    depends_on:
+      - redis
+      - auth_service
+      - catalog_service
+      - ia_recommender
+      - orders_service
+      - shipping_service
+      - payment_service
+      - cart_service
+      - notification_service
+      - inventory_sync_service
+
+  auth_service:
+    build:
+      context: .
+      dockerfile: auth_service/Dockerfile
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+
+  catalog_service:
+    build:
+      context: .
+      dockerfile: catalog_service/Dockerfile
+    env_file:
+      - .env
+    environment:
+      - AUTH_SERVICE_URL=http://auth_service:8000
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    ports:
+      - "8001:8001"
+    depends_on:
+      - redis
+
+  ia_recommender:
+    build:
+      context: .
+      dockerfile: ia_recommender/Dockerfile
+    env_file:
+      - .env
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CATALOG_SERVICE_URL=http://catalog_service:8001
+    ports:
+      - "8002:8002"
+    depends_on:
+      - redis
+      - catalog_service
+
+  orders_service:
+    build:
+      context: .
+      dockerfile: orders_service/Dockerfile
+    env_file:
+      - .env
+    environment:
+      - CATALOG_SERVICE_URL=http://catalog_service:8001
+      - AUTH_SERVICE_URL=http://auth_service:8000
+    ports:
+      - "8003:8003"
+    depends_on:
+      - catalog_service
+      - auth_service
+
+  shipping_service:
+    build:
+      context: .
+      dockerfile: shipping_service/Dockerfile
+    env_file:
+      - .env
+    environment:
+      - AUTH_SERVICE_URL=http://auth_service:8000
+    ports:
+      - "8004:8004"
+    depends_on:
+      - auth_service
+
+  payment_service:
+    build:
+      context: .
+      dockerfile: payment_service/Dockerfile
+    env_file:
+      - .env
+    environment:
+      - AUTH_SERVICE_URL=http://auth_service:8000
+    ports:
+      - "8005:8005"
+    depends_on:
+      - auth_service
+
+  cart_service:
+    build:
+      context: .
+      dockerfile: cart_service/Dockerfile
+    env_file:
+      - .env
+    environment:
+      - AUTH_SERVICE_URL=http://auth_service:8000
+      - ORDERS_SERVICE_URL=http://orders_service:8003
+    ports:
+      - "8006:8006"
+    depends_on:
+      - auth_service
+      - orders_service
+
+  notification_service:
+    build:
+      context: .
+      dockerfile: notification_service/Dockerfile
+    env_file:
+      - .env
+    environment:
+      - AUTH_SERVICE_URL=http://auth_service:8000
+    ports:
+      - "8007:8007"
+    depends_on:
+      - auth_service
+
+  search_service:
+    build:
+      context: .
+      dockerfile: search_service/Dockerfile
+    env_file:
+      - .env
+    ports:
+      - "8008:8008"
+
+  digital_delivery_service:
+    build:
+      context: .
+      dockerfile: digital_delivery_service/Dockerfile
+    env_file:
+      - .env
+    environment:
+      - AUTH_SERVICE_URL=http://auth_service:8000
+    ports:
+      - "8010:8010"
+    depends_on:
+      - auth_service
+
+  reviews_service:
+    build:
+      context: .
+      dockerfile: reviews_service/Dockerfile
+    env_file:
+      - .env
+    environment:
+      - AUTH_SERVICE_URL=http://auth_service:8000
+    ports:
+      - "8012:8012"
+    depends_on:
+      - auth_service
+
+  inventory_sync_service:
+    build:
+      context: .
+      dockerfile: inventory_sync_service/Dockerfile
+    env_file:
+      - .env
+    environment:
+      - AUTH_SERVICE_URL=http://auth_service:8000
+      - CATALOG_SERVICE_URL=http://catalog_service:8001
+    ports:
+      - "8009:8009"
+    depends_on:
+      - auth_service
+      - catalog_service
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    depends_on:
+      - api_gateway
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+
+  caddy:
+    image: caddy:2.8.4
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infra/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - api_gateway
+
+volumes:
+  redis_data:
+  grafana_data:
+  caddy_data:
+  caddy_config:
