@@ -1,7 +1,0 @@
-fastapi
-uvicorn[standard]
-sqlalchemy
-asyncpg
-greenlet
-httpx
-pydantic-settings
