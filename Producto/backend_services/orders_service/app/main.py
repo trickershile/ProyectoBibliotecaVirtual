@@ -206,7 +206,16 @@ def get_order(orden_id: str, authorization: str = Header(default="")):
             raise HTTPException(status_code=403, detail="No autorizado.")
 
         detalles = supabase.table("orden_detalles").select("*").eq("orden_id", orden_id_int).execute().data or []
-        return {"orden": orden, "items": detalles}
+        despacho = (
+            supabase.table("despachos")
+            .select("*")
+            .eq("orden_id", orden_id_int)
+            .limit(1)
+            .execute()
+            .data
+            or []
+        )
+        return {"orden": orden, "items": detalles, "despacho": despacho[0] if despacho else None}
     except HTTPException:
         raise
     except Exception:

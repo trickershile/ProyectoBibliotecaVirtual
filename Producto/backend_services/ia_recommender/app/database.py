@@ -39,8 +39,8 @@ cache_client = redis.Redis(
 
 MONGO_URI = os.getenv("MONGO_URI")
 mongo_client = AsyncIOMotorClient(MONGO_URI) if MONGO_URI else None
-mongo_db = mongo_client["lecturaviva"] if mongo_client else None
-chats_collection = mongo_db["chats_ia"] if mongo_db else None
+mongo_db = mongo_client["lecturaviva"] if mongo_client is not None else None
+chats_collection = mongo_db["chats_ia"] if mongo_db is not None else None
 
 async def close_mongo_client():
     """
@@ -48,5 +48,5 @@ async def close_mongo_client():
 
     Esto es importante en contenedores para liberar sockets al hacer shutdown/restart.
     """
-    if mongo_client:
+    if mongo_client is not None:
         mongo_client.close()

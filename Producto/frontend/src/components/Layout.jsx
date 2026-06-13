@@ -5,7 +5,7 @@ import Chat from './Chat';
 
 const Layout = () => {
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-gray-300 flex flex-col font-sans">
+    <div className="pastel-theme min-h-screen bg-[#0f1420] text-[#d8d7e5] flex flex-col font-sans">
       <Navbar />
       <main className="flex-grow">
         <Outlet />

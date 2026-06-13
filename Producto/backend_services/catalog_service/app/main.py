@@ -4,7 +4,7 @@ import os
 import sys
 import time
 
-from fastapi import FastAPI, HTTPException, status, Header  # Núcleo del framework web para rutas y excepciones
+from fastapi import FastAPI, HTTPException, status, Header, UploadFile, File, Query  # Núcleo del framework web para rutas y excepciones
 from app.database import supabase, cache_client  # Importamos los conectores que configuramos en database.py
 from app.models import LibroBase, LibroResponse, OperacionLibro, CategoriaBase, CategoriaResponse, LibroUpdate, CategoriaUpdate
 import httpx
@@ -72,6 +72,7 @@ async def metrics_middleware(request, call_next):
     return response
 
 AUTH_SERVICE_URL = os.getenv("AUTH_SERVICE_URL", "http://127.0.0.1:8000")
+BOOK_COVERS_BUCKET = os.getenv("BOOK_COVERS_BUCKET", "book-covers")
 http_client = httpx.Client(timeout=5)
 
 def _verify_token(authorization: str):
@@ -100,6 +101,16 @@ def _verify_admin(authorization: str):
     """
     data = _verify_token(authorization)
     if data.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="No autorizado.")
+    return data
+
+
+def _verify_owner_or_admin(user_id: str, authorization: str):
+    """
+    Regla de negocio: el recurso privado solo puede ser consultado por su dueño o por un admin.
+    """
+    data = _verify_token(authorization)
+    if data.get("role") != "admin" and data.get("id") != user_id:
         raise HTTPException(status_code=403, detail="No autorizado.")
     return data
 
@@ -435,6 +446,156 @@ def delete_category(category_id: str, authorization: str = Header(default="")):
         raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+def _resolve_public_url(storage_result):
+    if isinstance(storage_result, str):
+        return storage_result
+    if isinstance(storage_result, dict):
+        return (
+            storage_result.get("publicUrl")
+            or storage_result.get("public_url")
+            or storage_result.get("signedURL")
+            or storage_result.get("signed_url")
+        )
+    return None
+
+
+@app.post("/catalog/books/{book_id}/image", status_code=status.HTTP_201_CREATED)
+async def upload_book_image(
+    book_id: str,
+    file: UploadFile = File(...),
+    set_as_primary: bool = Query(default=True),
+    authorization: str = Header(default=""),
+):
+    """
+    Sube una portada al bucket de storage y actualiza el arreglo books.imagenes.
+    """
+    _verify_admin(authorization)
+    book_id_int = _book_id_to_int(book_id)
+    book_response = supabase.table("books").select("id,imagenes").eq("id", book_id_int).single().execute()
+    book = book_response.data
+    if not book:
+        raise HTTPException(status_code=404, detail="Libro no encontrado.")
+
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Solo se permiten archivos de imagen.")
+
+    file_bytes = await file.read()
+    if not file_bytes:
+        raise HTTPException(status_code=400, detail="El archivo enviado está vacío.")
+
+    extension = os.path.splitext(file.filename or "cover.jpg")[1] or ".jpg"
+    storage_path = f"books/{book_id_int}/{int(time.time() * 1000)}{extension.lower()}"
+
+    try:
+        supabase.storage.from_(BOOK_COVERS_BUCKET).upload(
+            storage_path,
+            file_bytes,
+            {"content-type": file.content_type},
+        )
+        public_url = _resolve_public_url(supabase.storage.from_(BOOK_COVERS_BUCKET).get_public_url(storage_path))
+        if not public_url:
+            raise RuntimeError("No se pudo obtener la URL pública de la imagen.")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    current_images = list(book.get("imagenes") or [])
+    filtered_images = [img for img in current_images if img != public_url]
+    next_images = [public_url, *filtered_images] if set_as_primary else [*filtered_images, public_url]
+
+    updated = supabase.table("books").update({"imagenes": next_images}).eq("id", book_id_int).execute()
+    cache_client.delete("all_books")
+    return {
+        "status": "success",
+        "book_id": book_id_int,
+        "image_url": public_url,
+        "imagenes": (updated.data or [{}])[0].get("imagenes", next_images),
+    }
+
+
+def _wishlist_response(usuario_id: str):
+    entries = (
+        supabase.table("wishlist_items")
+        .select("usuario_id,libro_id,created_at")
+        .eq("usuario_id", usuario_id)
+        .order("created_at", desc=True)
+        .execute()
+        .data
+        or []
+    )
+
+    results = []
+    for entry in entries:
+        book = (
+            supabase.table("books")
+            .select("*")
+            .eq("id", entry.get("libro_id"))
+            .single()
+            .execute()
+            .data
+        )
+        if book:
+            results.append({**entry, "book": book})
+    return results
+
+
+@app.get("/wishlist/me")
+def get_my_wishlist(authorization: str = Header(default="")):
+    identity = _verify_token(authorization)
+    return _wishlist_response(identity.get("id"))
+
+
+@app.get("/wishlist/{usuario_id}")
+def get_user_wishlist(usuario_id: str, authorization: str = Header(default="")):
+    _verify_owner_or_admin(usuario_id, authorization)
+    return _wishlist_response(usuario_id)
+
+
+@app.post("/wishlist/me/add/{book_id}", status_code=status.HTTP_201_CREATED)
+def add_my_wishlist_item(book_id: str, authorization: str = Header(default="")):
+    identity = _verify_token(authorization)
+    return add_user_wishlist_item(identity.get("id"), book_id, authorization)
+
+
+@app.post("/wishlist/{usuario_id}/add/{book_id}", status_code=status.HTTP_201_CREATED)
+def add_user_wishlist_item(usuario_id: str, book_id: str, authorization: str = Header(default="")):
+    _verify_owner_or_admin(usuario_id, authorization)
+    book_id_int = _book_id_to_int(book_id)
+
+    book = supabase.table("books").select("id").eq("id", book_id_int).single().execute().data
+    if not book:
+        raise HTTPException(status_code=404, detail="Libro no encontrado.")
+
+    existing = (
+        supabase.table("wishlist_items")
+        .select("*")
+        .match({"usuario_id": usuario_id, "libro_id": book_id_int})
+        .execute()
+        .data
+        or []
+    )
+    if existing:
+        return existing[0]
+
+    inserted = supabase.table("wishlist_items").insert({"usuario_id": usuario_id, "libro_id": book_id_int}).execute()
+    if not inserted.data:
+        raise HTTPException(status_code=400, detail="No se pudo agregar a favoritos.")
+    return inserted.data[0]
+
+
+@app.delete("/wishlist/me/remove/{book_id}", status_code=status.HTTP_204_NO_CONTENT)
+def remove_my_wishlist_item(book_id: str, authorization: str = Header(default="")):
+    identity = _verify_token(authorization)
+    return remove_user_wishlist_item(identity.get("id"), book_id, authorization)
+
+
+@app.delete("/wishlist/{usuario_id}/remove/{book_id}", status_code=status.HTTP_204_NO_CONTENT)
+def remove_user_wishlist_item(usuario_id: str, book_id: str, authorization: str = Header(default="")):
+    _verify_owner_or_admin(usuario_id, authorization)
+    book_id_int = _book_id_to_int(book_id)
+    supabase.table("wishlist_items").delete().match({"usuario_id": usuario_id, "libro_id": book_id_int}).execute()
+    return
 
 
 # --- CONDICIONAL DE ARRANQUE EXCLUSIVO PARA WINDOWS ---

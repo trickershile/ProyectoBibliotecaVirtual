@@ -16,28 +16,30 @@ const Navbar = () => {
     setSbUser(user);
     setSbProfile(profile);
     
-    const updateCartCount = () => {
-      setCartCount(getCartCount());
+    const updateCartCount = async () => {
+      const count = await getCartCount();
+      setCartCount(count);
       setIsAnimating(true);
       setTimeout(() => setIsAnimating(false), 300);
     };
     
     updateCartCount();
-    window.addEventListener('storage', updateCartCount);
-    window.addEventListener('cart-updated', updateCartCount);
+    globalThis.addEventListener('storage', updateCartCount);
+    globalThis.addEventListener('cart-updated', updateCartCount);
     
     const handleStorageChange = () => {
       const updatedUser = JSON.parse(localStorage.getItem('sb_user') || 'null');
       const updatedProfile = JSON.parse(localStorage.getItem('sb_profile') || 'null');
       setSbUser(updatedUser);
       setSbProfile(updatedProfile);
+      updateCartCount();
     };
-    window.addEventListener('sb_user_updated', handleStorageChange);
+    globalThis.addEventListener('sb_user_updated', handleStorageChange);
     
     return () => {
-      window.removeEventListener('storage', updateCartCount);
-      window.removeEventListener('cart-updated', updateCartCount);
-      window.removeEventListener('sb_user_updated', handleStorageChange);
+      globalThis.removeEventListener('storage', updateCartCount);
+      globalThis.removeEventListener('cart-updated', updateCartCount);
+      globalThis.removeEventListener('sb_user_updated', handleStorageChange);
     };
   }, []);
 
@@ -55,20 +57,42 @@ const Navbar = () => {
   const isAdmin = sbProfile?.role === 'admin';
 
   return (
-    <nav className="bg-gray-900 border-b border-gray-800 sticky top-0 z-50">
+    <nav className="bg-gray-900 border-b border-gray-800 sticky top-0 z-50 select-none">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
+          
+          {/* SECCIÓN DEL LOGOTIPO DIGITAL */}
           <div className="flex items-center">
             <div className="flex items-center space-x-2 mr-4">
-              <div className="w-3 h-3 rounded-full bg-red-500"></div>
-              <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-              <div className="w-3 h-3 rounded-full bg-green-500"></div>
+              
             </div>
-            <Link to="/" className="text-xl font-bold text-white font-mono tracking-tighter hover:text-blue-400 transition-colors">
-              BIBLIOTECA_VIRTUAL<span className="animate-pulse">_</span>
+            
+            <Link to="/" className="flex items-center space-x-3 text-xl font-bold text-white font-mono tracking-tighter hover:text-blue-400 transition-colors group">
+              {/* Icono SVG de Libro Ciberpunk */}
+              <svg 
+                className="w-12 h-12 text-blue-500 group-hover:text-cyan-400 transition-colors duration-300 transform group-hover:rotate-6" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+              >
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                <path d="M9 6h6" strokeDasharray="2 2" />
+                <circle cx="10" cy="11" r="1" fill="currentColor" />
+                <path d="M10 11h4" />
+                <circle cx="14" cy="15" r="1" fill="currentColor" />
+                <path d="M11 15h3" />
+              </svg>
+              <span>
+                BIBLIOTECA_VIRTUAL<span className="text-blue-500 animate-pulse">_</span>
+              </span>
             </Link>
           </div>
           
+          {/* MENÚ DE NAVEGACIÓN */}
           <div className="hidden md:flex items-center space-x-4">
             <Link 
               to="/" 
@@ -86,6 +110,15 @@ const Navbar = () => {
               </Link>
             )}
 
+            {isLoggedIn && (
+              <Link
+                to="/asistente"
+                className="px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/50 text-blue-400 text-sm font-mono font-bold hover:bg-blue-500 hover:text-white transition-all duration-300"
+              >
+                ./asistente
+              </Link>
+            )}
+
             <Link 
               to="/catalogo" 
               className="px-4 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/50 text-cyan-500 text-sm font-mono font-bold hover:bg-cyan-500 hover:text-black transition-all duration-300"
@@ -98,6 +131,13 @@ const Navbar = () => {
               className="px-4 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/50 text-purple-500 text-sm font-mono font-bold hover:bg-purple-500 hover:text-white transition-all duration-300"
             >
               ./reseñas
+            </Link>
+
+            <Link
+              to="/tracking"
+              className="px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/50 text-blue-300 text-sm font-mono font-bold hover:bg-blue-500 hover:text-white transition-all duration-300"
+            >
+              ./tracking
             </Link>
 
             <Link 
@@ -116,6 +156,7 @@ const Navbar = () => {
               </Link>
             )}
 
+            {/* CARRITO DE COMPRAS */}
             <Link 
               to="/carrito" 
               className={`relative p-2 rounded-full bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700 transition-all duration-300 ${isAnimating ? 'scale-125 text-blue-400' : 'scale-100'}`}
@@ -132,11 +173,12 @@ const Navbar = () => {
 
             <div className="h-6 w-[1px] bg-gray-700 mx-2"></div>
 
+            {/* CONTROL DE FLUJO DE SESIÓN */}
             {isLoggedIn ? (
               <button
                 type="button"
                 onClick={handleLogout}
-                className="text-blue-500 font-mono text-xs font-bold hover:text-blue-400 transition-colors"
+                className="text-blue-500 font-mono text-xs font-bold hover:text-blue-400 transition-colors cursor-pointer"
               >
                 CERRAR_SESIÓN
               </button>

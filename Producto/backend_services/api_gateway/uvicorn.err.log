@@ -1,0 +1,24 @@
+INFO:     Started server process [22780]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8080 (Press CTRL+C to quit)
+C:\Users\victo\Downloads\biblioteca\ProyectoBibliotecaVirtual-1\Producto\backend_services\.venv\Lib\site-packages\fastapi\openapi\utils.py:207: UserWarning: Duplicate Operation ID route_auth_auth__path__get for function route_auth at C:\Users\victo\Downloads\biblioteca\ProyectoBibliotecaVirtual-1\Producto\backend_services\api_gateway\app\main.py
+  warnings.warn(message, stacklevel=1)
+C:\Users\victo\Downloads\biblioteca\ProyectoBibliotecaVirtual-1\Producto\backend_services\.venv\Lib\site-packages\fastapi\openapi\utils.py:207: UserWarning: Duplicate Operation ID route_catalog_catalog__path__get for function route_catalog at C:\Users\victo\Downloads\biblioteca\ProyectoBibliotecaVirtual-1\Producto\backend_services\api_gateway\app\main.py
+  warnings.warn(message, stacklevel=1)
+C:\Users\victo\Downloads\biblioteca\ProyectoBibliotecaVirtual-1\Producto\backend_services\.venv\Lib\site-packages\fastapi\openapi\utils.py:207: UserWarning: Duplicate Operation ID route_ecommerce_orders_orders__path__get for function route_ecommerce_orders at C:\Users\victo\Downloads\biblioteca\ProyectoBibliotecaVirtual-1\Producto\backend_services\api_gateway\app\main.py
+  warnings.warn(message, stacklevel=1)
+C:\Users\victo\Downloads\biblioteca\ProyectoBibliotecaVirtual-1\Producto\backend_services\.venv\Lib\site-packages\fastapi\openapi\utils.py:207: UserWarning: Duplicate Operation ID route_shipping_and_maps_shipping__path__get for function route_shipping_and_maps at C:\Users\victo\Downloads\biblioteca\ProyectoBibliotecaVirtual-1\Producto\backend_services\api_gateway\app\main.py
+  warnings.warn(message, stacklevel=1)
+C:\Users\victo\Downloads\biblioteca\ProyectoBibliotecaVirtual-1\Producto\backend_services\.venv\Lib\site-packages\fastapi\openapi\utils.py:207: UserWarning: Duplicate Operation ID route_inventory_sync_inventory__path__get for function route_inventory_sync at C:\Users\victo\Downloads\biblioteca\ProyectoBibliotecaVirtual-1\Producto\backend_services\api_gateway\app\main.py
+  warnings.warn(message, stacklevel=1)
+C:\Users\victo\Downloads\biblioteca\ProyectoBibliotecaVirtual-1\Producto\backend_services\.venv\Lib\site-packages\fastapi\openapi\utils.py:207: UserWarning: Duplicate Operation ID route_payments_payments__path__get for function route_payments at C:\Users\victo\Downloads\biblioteca\ProyectoBibliotecaVirtual-1\Producto\backend_services\api_gateway\app\main.py
+  warnings.warn(message, stacklevel=1)
+C:\Users\victo\Downloads\biblioteca\ProyectoBibliotecaVirtual-1\Producto\backend_services\.venv\Lib\site-packages\fastapi\openapi\utils.py:207: UserWarning: Duplicate Operation ID route_cart_cart__path__get for function route_cart at C:\Users\victo\Downloads\biblioteca\ProyectoBibliotecaVirtual-1\Producto\backend_services\api_gateway\app\main.py
+  warnings.warn(message, stacklevel=1)
+C:\Users\victo\Downloads\biblioteca\ProyectoBibliotecaVirtual-1\Producto\backend_services\.venv\Lib\site-packages\fastapi\openapi\utils.py:207: UserWarning: Duplicate Operation ID route_wishlist_wishlist__path__get for function route_wishlist at C:\Users\victo\Downloads\biblioteca\ProyectoBibliotecaVirtual-1\Producto\backend_services\api_gateway\app\main.py
+  warnings.warn(message, stacklevel=1)
+C:\Users\victo\Downloads\biblioteca\ProyectoBibliotecaVirtual-1\Producto\backend_services\.venv\Lib\site-packages\fastapi\openapi\utils.py:207: UserWarning: Duplicate Operation ID route_notifications_notifications__path__get for function route_notifications at C:\Users\victo\Downloads\biblioteca\ProyectoBibliotecaVirtual-1\Producto\backend_services\api_gateway\app\main.py
+  warnings.warn(message, stacklevel=1)
+C:\Users\victo\Downloads\biblioteca\ProyectoBibliotecaVirtual-1\Producto\backend_services\.venv\Lib\site-packages\fastapi\openapi\utils.py:207: UserWarning: Duplicate Operation ID route_reviews_reviews__path__get for function route_reviews at C:\Users\victo\Downloads\biblioteca\ProyectoBibliotecaVirtual-1\Producto\backend_services\api_gateway\app\main.py
+  warnings.warn(message, stacklevel=1)

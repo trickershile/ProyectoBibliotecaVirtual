@@ -1,6 +1,8 @@
-import { useState, useEffect } from 'react';
-import { Book, Search, Loader2, Info, ShoppingCart } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Book, Search, Loader2, Info, ShoppingCart, Heart } from 'lucide-react';
 import { booksApi } from '../api/books';
+import { searchApi } from '../api/search';
+import { wishlistApi } from '../api/wishlist';
 import { withApiOrigin } from '../lib/supabase';
 import { addCartItem } from '../lib/cart';
 
@@ -9,6 +11,9 @@ const Catalogo = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+  const [wishlistIds, setWishlistIds] = useState([]);
+  const [wishlistLoading, setWishlistLoading] = useState(false);
   
   const [filters, setFilters] = useState({
     pickup_location: 'all',
@@ -21,24 +26,71 @@ const Catalogo = () => {
     fetchBooks();
   }, [filters, searchTerm]);
 
+  useEffect(() => {
+    fetchWishlist();
+  }, []);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      fetchSuggestions();
+    }, 250);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm]);
+
+  const applyClientFilters = (data = []) =>
+    data
+      .filter((book) => {
+        const matchesPickup =
+          !filters.pickup_location ||
+          filters.pickup_location === 'all' ||
+          book.pickup_location === filters.pickup_location;
+
+        const matchesCategory =
+          !filters.categories ||
+          filters.categories === 'all' ||
+          book.categories?.includes(filters.categories);
+
+        const matchesStatus = book.status === 'available';
+
+        return matchesPickup && matchesCategory && matchesStatus;
+      })
+      .sort((a, b) => {
+        if (filters.sort_by === 'rating') {
+          return Number(b.rating || 0) - Number(a.rating || 0);
+        }
+
+        const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+        return dateB - dateA;
+      });
+
   const fetchBooks = async () => {
     try {
       setLoading(true);
-      const params = {
-        ...filters,
-        status: 'available', // Forzamos solo libros disponibles para venta
-        search: searchTerm || undefined
-      };
-      
-      // Ajustar categories para que sea un array si no es 'all'
-      if (params.categories && params.categories !== 'all') {
-        params.categories = [params.categories];
+      const trimmedSearch = searchTerm.trim();
+      if (trimmedSearch.length > 0) {
+        const data = await searchApi.searchBooks({
+          q: trimmedSearch,
+          limit: 50,
+          offset: 0,
+        });
+        setBooks(applyClientFilters(data));
       } else {
-        delete params.categories;
-      }
+        const params = {
+          ...filters,
+          status: 'available',
+        };
 
-      const data = await booksApi.getAll(params);
-      setBooks(data);
+        if (params.categories && params.categories !== 'all') {
+          params.categories = [params.categories];
+        } else {
+          delete params.categories;
+        }
+
+        const data = await booksApi.getAll(params);
+        setBooks(applyClientFilters(data));
+      }
       setError(null);
     } catch (err) {
       console.error("Error al cargar el catálogo:", err);
@@ -48,11 +100,57 @@ const Catalogo = () => {
     }
   };
 
-  const addToCart = (book) => {
-    const result = addCartItem(book);
-    if (result.added) {
+  const fetchSuggestions = async () => {
+    const trimmedSearch = searchTerm.trim();
+    if (trimmedSearch.length < 2) {
+      setSuggestions([]);
+      return;
+    }
+
+    try {
+      const data = await searchApi.suggest({
+        q: trimmedSearch,
+        limit: 6,
+      });
+      setSuggestions(data || []);
+    } catch (err) {
+      console.error('Error al cargar sugerencias:', err);
+      setSuggestions([]);
+    }
+  };
+
+  const fetchWishlist = async () => {
+    const sbUser = JSON.parse(localStorage.getItem('sb_user') || 'null');
+    if (!sbUser) {
+      setWishlistIds([]);
+      return;
+    }
+
+    try {
+      setWishlistLoading(true);
+      const data = await wishlistApi.getMy();
+      const ids = (data || []).map((item) => item.libro_id || item.book?.id).filter(Boolean);
+      setWishlistIds(ids);
+    } catch (err) {
+      console.error('Error al cargar favoritos:', err);
+    } finally {
+      setWishlistLoading(false);
+    }
+  };
+
+  const addToCart = async (book) => {
+    const result = await addCartItem(book);
+    if (result.added && result.updated) {
+      window.dispatchEvent(new CustomEvent('show-toast', { 
+        detail: { message: `"${book.title}" ya estaba en el carrito y se aumentó la cantidad_` } 
+      }));
+    } else if (result.added) {
       window.dispatchEvent(new CustomEvent('show-toast', { 
         detail: { message: `"${book.title}" añadido al sistema de compra_` } 
+      }));
+    } else if (result.reason === 'unauthenticated') {
+      window.dispatchEvent(new CustomEvent('show-toast', { 
+        detail: { message: `[!] Debes iniciar sesión para usar el carrito_` } 
       }));
     } else if (result.reason === 'duplicate') {
       window.dispatchEvent(new CustomEvent('show-toast', { 
@@ -80,6 +178,47 @@ const Catalogo = () => {
       educational_level: 'all',
       sort_by: 'date'
     });
+  };
+
+  const wishlistSet = useMemo(() => new Set(wishlistIds), [wishlistIds]);
+
+  const toggleWishlist = async (book) => {
+    const sbUser = JSON.parse(localStorage.getItem('sb_user') || 'null');
+    const bookId = book._id || book.id;
+    if (!sbUser) {
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { message: '[!] Debes iniciar sesión para guardar favoritos_' }
+      }));
+      return;
+    }
+
+    if (!bookId || wishlistLoading) {
+      return;
+    }
+
+    try {
+      setWishlistLoading(true);
+      if (wishlistSet.has(bookId)) {
+        await wishlistApi.removeMy(bookId);
+        setWishlistIds((current) => current.filter((id) => id !== bookId));
+        window.dispatchEvent(new CustomEvent('show-toast', {
+          detail: { message: `"${book.title}" eliminado de favoritos_` }
+        }));
+      } else {
+        await wishlistApi.addMy(bookId);
+        setWishlistIds((current) => [...current, bookId]);
+        window.dispatchEvent(new CustomEvent('show-toast', {
+          detail: { message: `"${book.title}" guardado en favoritos_` }
+        }));
+      }
+    } catch (err) {
+      console.error('Error al actualizar favoritos:', err);
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { message: '[!] No se pudo actualizar favoritos_' }
+      }));
+    } finally {
+      setWishlistLoading(false);
+    }
   };
 
   const BookSkeleton = () => (
@@ -155,12 +294,25 @@ const Catalogo = () => {
                 <input 
                   type="text"
                   placeholder="Título o autor..."
+                  list="catalog-search-suggestions"
                   className="w-full bg-black/50 border border-gray-700 rounded-lg pl-8 pr-3 py-2 text-[11px] focus:border-blue-500 outline-none transition-all"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
+                <datalist id="catalog-search-suggestions">
+                  {suggestions.map((suggestion) => (
+                    <option key={suggestion.id || suggestion._id} value={suggestion.title}>
+                      {suggestion.author}
+                    </option>
+                  ))}
+                </datalist>
                 <Search className="w-3 h-3 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500" />
               </div>
+              {searchTerm.trim().length > 0 && (
+                <p className="mt-2 text-[9px] text-blue-400 font-bold uppercase tracking-widest">
+                  BÚSQUEDA_BACKEND_ACTIVA
+                </p>
+              )}
             </div>
 
             {/* Location */}
@@ -279,6 +431,18 @@ const Catalogo = () => {
                       <div className="absolute top-4 left-4 px-2.5 py-1 bg-green-600 text-[8px] font-black text-white rounded-md uppercase tracking-widest shadow-xl">
                         LIBRO_NUEVO
                       </div>
+                      <button
+                        type="button"
+                        onClick={() => toggleWishlist(book)}
+                        className={`absolute top-4 right-4 p-2 rounded-full border transition-all ${
+                          wishlistSet.has(book._id || book.id)
+                            ? 'bg-pink-500/20 border-pink-400 text-pink-300'
+                            : 'bg-black/50 border-gray-700 text-gray-300 hover:border-pink-400 hover:text-pink-300'
+                        }`}
+                        title={wishlistSet.has(book._id || book.id) ? 'Quitar de favoritos' : 'Guardar en favoritos'}
+                      >
+                        <Heart className={`w-4 h-4 ${wishlistSet.has(book._id || book.id) ? 'fill-current' : ''}`} />
+                      </button>
                     </div>
 
                     <div className="p-5 flex flex-col flex-grow">
