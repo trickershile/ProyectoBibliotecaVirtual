@@ -10,6 +10,8 @@ import Perfil from './pages/Perfil';
 import Cart from './pages/Cart';
 import Reviews from './pages/Reviews';
 import Contact from './pages/Contact';
+import AsistenteIA from './pages/AsistenteIA';
+import TrackingPublico from './pages/TrackingPublico';
 
 const ProtectedRoute = ({ children, requireAdmin = false }) => {
   const location = useLocation();
@@ -55,7 +57,16 @@ function App() {
           <Route path="register" element={<Register />} />
           <Route path="carrito" element={<Cart />} />
           <Route path="resenas" element={<Reviews />} />
+          <Route path="tracking" element={<TrackingPublico />} />
           <Route path="contacto" element={<Contact />} />
+          <Route
+            path="asistente"
+            element={
+              <ProtectedRoute>
+                <AsistenteIA />
+              </ProtectedRoute>
+            }
+          />
         </Route>
       </Routes>
       <Toast />

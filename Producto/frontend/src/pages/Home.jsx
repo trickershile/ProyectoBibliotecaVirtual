@@ -2,7 +2,7 @@ import Hero from '../components/Hero';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import Carousel from '../components/Carousel';
-import TerminalCard from '../components/TerminalCard';
+import AnimatedTerminal from '../components/AnimatedTerminal';
 
 const Home = () => {
   const mockBooks = [
@@ -40,6 +40,7 @@ const Home = () => {
     <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-10 space-y-24">
       <Hero />
 
+      {/* RECOMENDACIONES IA */}
       <section className="px-4">
         <h2 className="text-3xl font-bold text-white mb-10 text-center font-mono tracking-tighter uppercase border-b border-gray-800 pb-4 max-w-md mx-auto text-blue-500">
           {'//'} RECOMENDACIONES_IA
@@ -47,6 +48,7 @@ const Home = () => {
         <Carousel />
       </section>
 
+      {/* LISTAS TOP SELECCIONADAS */}
       <section className="px-4">
         <h2 className="text-3xl font-bold text-white mb-10 text-center font-mono tracking-tighter uppercase border-b border-gray-800 pb-4 max-w-md mx-auto text-yellow-500">
           {'//'} LISTAS_TOP_SELECCIONADAS
@@ -90,6 +92,7 @@ const Home = () => {
         </div>
       </section>
 
+      {/* NOVEDADES DEL SISTEMA */}
       <section className="px-4">
         <h2 className="text-3xl font-bold text-white mb-10 text-center font-mono tracking-tighter uppercase border-b border-gray-800 pb-4 max-w-md mx-auto text-red-500">
           {'//'} NOVEDADES_DEL_SISTEMA
@@ -110,22 +113,16 @@ const Home = () => {
         </div>
       </section>
 
+      {/* SOBRE NUESTRO SITIO (ANIMACIÓN EN BUCLE CORREGIDA) */}
       <section className="px-4">
         <h2 className="text-3xl font-bold text-white mb-10 text-center font-mono tracking-tighter uppercase border-b border-gray-800 pb-4 max-w-md mx-auto">
           {'//'} SOBRE NUESTRO SITIO
         </h2>
-        <TerminalCard title="fastapi-server.py">
-          <p className="text-green-400">INFO:     Started server process [3128]</p>
-          <p className="text-green-400">INFO:     Waiting for application startup.</p>
-          <p className="text-blue-400">INFO:     Application startup complete.</p>
-          <p className="text-white mt-2">INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)</p>
-          <p className="text-yellow-400 mt-4">API Routes loaded:</p>
-          <p className="text-gray-300 pl-4">- GET /</p>
-          <p className="text-gray-300 pl-4">- GET /test</p>
-          <p className="text-white mt-4 animate-pulse">_</p>
-        </TerminalCard>
+        {/* Cerramos el componente de forma limpia para que ejecute su propio bucle interno */}
+        <AnimatedTerminal />
       </section>
 
+      {/* LIBROS DESTACADOS */}
       <section>
         <div className="flex flex-col sm:flex-row justify-between items-center mb-12 px-4 space-y-4 sm:space-y-0">
           <h2 className="text-3xl font-bold text-white font-mono tracking-tighter uppercase border-l-4 border-blue-600 pl-4">
@@ -148,6 +145,7 @@ const Home = () => {
         </div>
       </section>
 
+      {/* CALL TO ACTION FINAL */}
       <section className="bg-gray-900/50 border border-gray-800 rounded-3xl p-12 text-center shadow-2xl mx-4">
         <h3 className="text-3xl font-bold text-white mb-6 font-mono tracking-tighter uppercase">
           ¿LISTO PARA EMPEZAR A LEER?

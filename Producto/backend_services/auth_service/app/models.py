@@ -15,6 +15,9 @@ class UserLogin(BaseModel):
     email: EmailStr
     password: str
 
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str
+
 # --- MODELO DE EDICIÓN (Mapea el Caso de Uso 3: Modificar datos de cuenta) ---
 # En Spring, a veces usas una clase separada o validas campos manuales para actualizaciones parciales.
 class UserUpdate(BaseModel):

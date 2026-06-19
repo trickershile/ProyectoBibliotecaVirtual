@@ -10,7 +10,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-/lib/
+lib/
 lib64/
 parts/
 sdist/
@@ -22,6 +22,9 @@ wheels/
 MANIFEST
 .env
 .venv
+.venv-*/
+.venv-auth/
+.venv-gateway/
 env/
 venv/
 ENV/
@@ -39,6 +42,8 @@ yarn-error.log*
 .env.development.local
 .env.test.local
 .env.production.local
+!Producto/frontend/src/lib/
+!Producto/frontend/src/lib/**
 
 # IDEs
 .vscode/

@@ -267,7 +267,7 @@ async def route_auth(request: Request, path: str):
 # =========================
 # Proxies HTTP (servicios)
 # =========================
-@app.api_route("/catalog/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+@app.api_route("/catalog/{path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
 async def route_catalog(request: Request, path: str):
     """
     Reverse proxy del Catalog Service (producto/categorías).
@@ -387,7 +387,7 @@ async def route_ia_websocket(websocket: WebSocket, usuario_id: str):
     except Exception:
         await websocket.close()
 
-@app.api_route("/orders/{path:path}", methods=["POST", "GET"])
+@app.api_route("/orders/{path:path}", methods=["POST", "GET", "PATCH", "DELETE"])
 async def route_ecommerce_orders(request: Request, path: str):
     """
     Reverse proxy del Orders Service.
@@ -408,7 +408,7 @@ async def route_ecommerce_orders(request: Request, path: str):
     response = await http_client.send(req, stream=True)
     return StreamingResponse(response.aiter_raw(), status_code=response.status_code, headers=response.headers)
 
-@app.api_route("/shipping/{path:path}", methods=["GET", "POST"])
+@app.api_route("/shipping/{path:path}", methods=["GET", "POST", "PATCH", "DELETE"])
 async def route_shipping_and_maps(request: Request, path: str):
     """
     Reverse proxy del Shipping Service.
@@ -452,7 +452,7 @@ async def route_inventory_sync(request: Request, path: str):
     response = await http_client.send(req, stream=True)
     return StreamingResponse(response.aiter_raw(), status_code=response.status_code, headers=response.headers)
 
-@app.api_route("/payments/{path:path}", methods=["GET", "POST"])
+@app.api_route("/payments/{path:path}", methods=["GET", "POST", "DELETE"])
 async def route_payments(request: Request, path: str):
     """
     Reverse proxy del Payment Service.
@@ -486,6 +486,27 @@ async def route_cart(request: Request, path: str):
     req = http_client.build_request(
         method=request.method,
         url=f"{CART_SERVICE_URL}/cart/{path}",
+        headers=request.headers.raw,
+        content=body
+    )
+    response = await http_client.send(req, stream=True)
+    return StreamingResponse(response.aiter_raw(), status_code=response.status_code, headers=response.headers)
+
+
+@app.api_route("/wishlist/{path:path}", methods=["GET", "POST", "DELETE"])
+async def route_wishlist(request: Request, path: str):
+    """
+    Reverse proxy de favoritos/wishlist.
+
+    Se resuelve dentro de catalog_service para evitar otro microservicio cuando solo se requiere una tabla
+    relacional simple contra books.
+    """
+    await validar_token_jwt(request)
+
+    body = await request.body()
+    req = http_client.build_request(
+        method=request.method,
+        url=f"{CATALOG_SERVICE_URL}/wishlist/{path}",
         headers=request.headers.raw,
         content=body
     )

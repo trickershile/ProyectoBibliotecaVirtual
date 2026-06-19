@@ -1,7 +1,11 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { deliveryApi } from '../api/delivery';
 import { ordersApi } from '../api/orders';
+import { paymentsApi } from '../api/payments';
+import { wishlistApi } from '../api/wishlist';
 import { getProfile, updateProfile, withApiOrigin } from '../lib/supabase';
-import { User, Package, Download, Calendar, MapPin, Clock, Loader2, AlertCircle, Edit3, Check, X } from 'lucide-react';
+import { User, Package, Download, Calendar, MapPin, Clock, Loader2, AlertCircle, Edit3, Check, X, Heart, CreditCard, Truck } from 'lucide-react';
 
 const Perfil = () => {
   const [orders, setOrders] = useState([]);
@@ -9,6 +13,9 @@ const Perfil = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [wishlist, setWishlist] = useState([]);
+  const [payments, setPayments] = useState([]);
+  const [downloadingBookId, setDownloadingBookId] = useState(null);
   const [editForm, setEditForm] = useState({
     first_name: '',
     last_name: '',
@@ -19,6 +26,8 @@ const Perfil = () => {
   useEffect(() => {
     fetchProfileData();
     fetchOrders();
+    fetchWishlist();
+    fetchPayments();
   }, []);
 
   const fetchProfileData = async () => {
@@ -50,6 +59,54 @@ const Perfil = () => {
       setError("No se pudo cargar el historial de pedidos.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchWishlist = async () => {
+    try {
+      const data = await wishlistApi.getMy();
+      setWishlist(data || []);
+    } catch (err) {
+      console.error('Error al cargar favoritos:', err);
+    }
+  };
+
+  const fetchPayments = async () => {
+    try {
+      const data = await paymentsApi.getMyPayments();
+      setPayments(data || []);
+    } catch (err) {
+      console.error('Error al cargar pagos:', err);
+    }
+  };
+
+  const handleDigitalDownload = async (bookId, kind = 'full') => {
+    try {
+      setDownloadingBookId(bookId);
+      const response = await deliveryApi.getSignedUrl(bookId, { kind, expires_in: 600 });
+      if (response?.signed_url) {
+        window.open(response.signed_url, '_blank', 'noopener,noreferrer');
+      } else {
+        throw new Error('signed_url_not_returned');
+      }
+    } catch (err) {
+      console.error('Error al obtener descarga digital:', err);
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { message: '[!] No se pudo obtener el acceso al contenido digital_' }
+      }));
+    } finally {
+      setDownloadingBookId(null);
+    }
+  };
+
+  const handleRemoveFavorite = async (bookId) => {
+    try {
+      await wishlistApi.removeMy(bookId);
+      setWishlist((current) => current.filter((item) => (item.libro_id || item.book?.id) !== bookId));
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: 'Favorito eliminado correctamente_' } }));
+    } catch (err) {
+      console.error('Error al eliminar favorito:', err);
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: '[!] No se pudo eliminar el favorito_' } }));
     }
   };
 
@@ -164,6 +221,84 @@ const Perfil = () => {
                 </div>
               )}
             </div>
+
+            <div className="bg-gray-900/30 border border-gray-800 rounded-2xl p-6 space-y-4">
+              <div className="flex items-center justify-between border-b border-gray-800 pb-3">
+                <h2 className="text-[11px] font-black text-white uppercase tracking-[0.2em] flex items-center gap-2">
+                  <Heart className="w-4 h-4 text-pink-400" /> FAVORITOS
+                </h2>
+                <span className="text-[9px] text-gray-500 font-bold">{wishlist.length} GUARDADOS</span>
+              </div>
+
+              {wishlist.length === 0 ? (
+                <p className="text-[10px] text-gray-500 uppercase tracking-widest">No tienes libros favoritos guardados_</p>
+              ) : (
+                <div className="space-y-3">
+                  {wishlist.slice(0, 4).map((item) => {
+                    const book = item.book || {};
+                    const bookId = item.libro_id || book.id;
+                    return (
+                      <div key={item.id || bookId} className="flex items-center gap-3 border border-gray-800 rounded-xl p-3 bg-black/30">
+                        <img
+                          src={book.image_url ? withApiOrigin(book.image_url) : 'https://via.placeholder.com/80x120?text=BOOK'}
+                          alt={book.title || 'Libro'}
+                          className="w-12 h-16 object-cover rounded-md border border-gray-800"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[10px] font-bold text-gray-200 uppercase truncate">{book.title || `Libro #${bookId}`}</p>
+                          <p className="text-[9px] text-gray-500 italic truncate">{book.author || 'Autor no disponible'}</p>
+                          <p className="text-[9px] text-blue-400 font-bold mt-1">{book.pickup_location || 'Sin sede registrada'}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveFavorite(bookId)}
+                          className="px-2 py-1 text-[9px] font-bold uppercase rounded-lg border border-pink-500/20 text-pink-400 hover:bg-pink-500/10 transition-all"
+                        >
+                          quitar
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div className="bg-gray-900/30 border border-gray-800 rounded-2xl p-6 space-y-4">
+              <div className="flex items-center justify-between border-b border-gray-800 pb-3">
+                <h2 className="text-[11px] font-black text-white uppercase tracking-[0.2em] flex items-center gap-2">
+                  <CreditCard className="w-4 h-4 text-emerald-400" /> PAGOS
+                </h2>
+                <span className="text-[9px] text-gray-500 font-bold">{payments.length} REGISTROS</span>
+              </div>
+
+              {payments.length === 0 ? (
+                <p className="text-[10px] text-gray-500 uppercase tracking-widest">Aún no hay pagos registrados_</p>
+              ) : (
+                <div className="space-y-3">
+                  {payments.slice(0, 4).map((payment) => (
+                    <div key={payment.id} className="border border-gray-800 rounded-xl p-3 bg-black/30 space-y-2">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-[9px] text-gray-500 font-bold uppercase">Pago #{payment.id}</span>
+                        <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase border ${
+                          payment.estado === 'pagado'
+                            ? 'bg-green-500/10 text-green-400 border-green-500/20'
+                            : payment.estado === 'reembolsado'
+                              ? 'bg-red-500/10 text-red-400 border-red-500/20'
+                              : 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
+                        }`}>
+                          {payment.estado}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-[10px]">
+                        <span className="text-gray-400 uppercase">{payment.metodo_pago}</span>
+                        <span className="text-emerald-400 font-black">${payment.monto?.toLocaleString('es-CL')}</span>
+                      </div>
+                      <p className="text-[9px] text-gray-600 uppercase">Orden asociada: #{payment.orden_id}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="lg:col-span-2 space-y-6">
@@ -226,10 +361,49 @@ const Perfil = () => {
                           <div className="flex flex-col">
                             <span className="text-gray-300 font-bold uppercase">{item.title}</span>
                             <span className="text-gray-600 text-[8px] font-bold italic">Sede: {item.pickup_location}</span>
+                            <span className="text-[8px] text-purple-400 font-bold uppercase">Tipo: {item.tipo_item || 'fisico'}</span>
                           </div>
-                          <span className="text-white font-mono">${item.price?.toLocaleString('es-CL')}</span>
+                          <div className="flex items-center gap-3">
+                            {(item.tipo_item === 'digital' || item.tipo_item === 'prestamo') && (
+                              <button
+                                type="button"
+                                onClick={() => handleDigitalDownload(item.libro_id, item.tipo_item === 'prestamo' ? 'preview' : 'full')}
+                                disabled={downloadingBookId === item.libro_id}
+                                className="px-2 py-1 rounded-lg border border-blue-500/20 text-blue-300 hover:bg-blue-500/10 text-[8px] font-black uppercase flex items-center gap-2"
+                              >
+                                {downloadingBookId === item.libro_id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3" />}
+                                DESCARGAR
+                              </button>
+                            )}
+                            <span className="text-white font-mono">${item.price?.toLocaleString('es-CL')}</span>
+                          </div>
                         </div>
                       ))}
+                      {order.despacho && (
+                        <div className="py-4 space-y-3">
+                          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 rounded-xl border border-blue-500/20 bg-blue-500/5 p-4">
+                            <div className="space-y-2">
+                              <p className="text-[9px] font-black uppercase tracking-widest text-blue-300 flex items-center gap-2">
+                                <Truck className="w-3 h-3" /> DESPACHO_ASOCIADO
+                              </p>
+                              <div className="flex flex-wrap gap-3 text-[9px] uppercase">
+                                <span className="text-gray-400">Código: <span className="text-white font-black">{order.despacho.codigo_seguimiento}</span></span>
+                                <span className="text-gray-400">Estado: <span className="text-blue-300 font-black">{order.despacho.estado_envio || 'pendiente'}</span></span>
+                              </div>
+                              <p className="text-[9px] text-gray-400 flex items-center gap-2">
+                                <MapPin className="w-3 h-3 text-blue-400" />
+                                {order.despacho.direccion_destino || 'Retiro en biblioteca'}
+                              </p>
+                            </div>
+                            <Link
+                              to={`/tracking?codigo=${encodeURIComponent(order.despacho.codigo_seguimiento)}`}
+                              className="px-3 py-2 rounded-xl border border-blue-500/20 bg-blue-500/10 text-blue-300 hover:bg-blue-500/20 text-[9px] font-black uppercase tracking-widest text-center"
+                            >
+                              VER_TRACKING
+                            </Link>
+                          </div>
+                        </div>
+                      )}
                       <div className="pt-3 mt-1 flex justify-between items-center">
                         <span className="text-[9px] text-gray-500 font-black uppercase tracking-widest">TOTAL_TRANSACCIÓN</span>
                         <span className="text-sm font-black text-green-500">${order.total_amount?.toLocaleString('es-CL')}</span>

@@ -19,11 +19,14 @@ const apiClient = {
 
     try {
       const response = await fetch(url, config);
+      const text = await response.text();
+      const data = text ? JSON.parse(text) : null;
+
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || 'Algo salió mal');
+        throw new Error(data?.detail || data?.message || 'Algo salió mal');
       }
-      return await response.json();
+
+      return data;
     } catch (error) {
       console.error('API Error:', error);
       throw error;
@@ -50,6 +53,14 @@ const apiClient = {
     });
   },
 
+  async patch(endpoint, body, options = {}) {
+    return this.fetch(endpoint, {
+      ...options,
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    });
+  },
+
   async delete(endpoint, options = {}) {
     return this.fetch(endpoint, { ...options, method: 'DELETE' });
   },
@@ -71,11 +82,14 @@ const apiClient = {
 
     try {
       const response = await fetch(url, config);
+      const text = await response.text();
+      const data = text ? JSON.parse(text) : null;
+
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || 'Error al subir archivo');
+        throw new Error(data?.detail || data?.message || 'Error al subir archivo');
       }
-      return await response.json();
+
+      return data;
     } catch (error) {
       console.error('Upload Error:', error);
       throw error;

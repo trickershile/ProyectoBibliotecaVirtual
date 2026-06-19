@@ -7,7 +7,7 @@ import time
 import anyio
 from fastapi import FastAPI, HTTPException, status, Header  # Importamos componentes del núcleo de FastAPI para rutas y errores
 from app.database import supabase  # Importamos el cliente de base de datos relacional (PostgreSQL) [cite: 13, 33, 34]
-from app.models import UserRegister, UserLogin, UserUpdate, UserResponse  # Importamos los DTOs que creamos en models.py
+from app.models import UserRegister, UserLogin, UserUpdate, UserResponse, RefreshTokenRequest  # Importamos los DTOs que creamos en models.py
 from prometheus_client import Counter, Histogram, make_asgi_app
 
 """
@@ -150,10 +150,54 @@ async def login_user(credentials: UserLogin):
         return {
             "access_token": session_response.session.access_token,
             "token_type": "bearer",
+            "refresh_token": session_response.session.refresh_token,
+            "expires_at": getattr(session_response.session, "expires_at", None),
             "user": profile.data
         }
     except Exception:
         raise HTTPException(status_code=401, detail="Credenciales incorrectas o inicio de sesión fallido.")
+
+
+@app.post("/auth/refresh")
+async def refresh_user_session(data: RefreshTokenRequest):
+    """
+    Renueva la sesión usando un refresh_token emitido por Supabase Auth.
+    """
+    try:
+        refreshed = await anyio.to_thread.run_sync(
+            lambda: supabase.auth.refresh_session(data.refresh_token)
+        )
+        if not refreshed or not getattr(refreshed, "session", None):
+            raise HTTPException(status_code=401, detail="No se pudo renovar la sesión.")
+
+        user_id = refreshed.user.id
+        profile = await anyio.to_thread.run_sync(
+            lambda: supabase.table("profiles").select("*").eq("id", user_id).single().execute()
+        )
+        return {
+            "access_token": refreshed.session.access_token,
+            "token_type": "bearer",
+            "refresh_token": refreshed.session.refresh_token,
+            "expires_at": getattr(refreshed.session, "expires_at", None),
+            "user": profile.data
+        }
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=401, detail="Refresh token inválido o expirado.")
+
+
+@app.post("/auth/logout")
+def logout_user(authorization: str = Header(default="")):
+    """
+    Cierra la sesión lógica del cliente.
+
+    Nota:
+    - En este backend la invalidación fuerte del JWT se delega a Supabase/Auth lifetime.
+    - El frontend debe eliminar access_token y refresh_token locales.
+    """
+    verify_token(authorization)
+    return {"status": "ok", "message": "Sesión cerrada en cliente."}
 
 
 @app.get("/auth/verify") 
