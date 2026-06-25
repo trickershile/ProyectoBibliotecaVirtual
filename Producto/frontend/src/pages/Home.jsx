@@ -2,7 +2,6 @@ import Hero from '../components/Hero';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import Carousel from '../components/Carousel';
-import AnimatedTerminal from '../components/AnimatedTerminal';
 
 const Home = () => {
   const mockBooks = [
@@ -111,15 +110,6 @@ const Home = () => {
             <Button variant="outline" className="text-xs py-1">./ver_detalles</Button>
           </div>
         </div>
-      </section>
-
-      {/* SOBRE NUESTRO SITIO (ANIMACIÓN EN BUCLE CORREGIDA) */}
-      <section className="px-4">
-        <h2 className="text-3xl font-bold text-white mb-10 text-center font-mono tracking-tighter uppercase border-b border-gray-800 pb-4 max-w-md mx-auto">
-          {'//'} SOBRE NUESTRO SITIO
-        </h2>
-        {/* Cerramos el componente de forma limpia para que ejecute su propio bucle interno */}
-        <AnimatedTerminal />
       </section>
 
       {/* LIBROS DESTACADOS */}
