@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <style>
+    @media (prefers-color-scheme: dark) {
+      .glow { stroke: #22d3ee; }
+    }
+  </style>
+  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+  <path class="glow" d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+  <circle cx="12" cy="10" r="2" fill="#3b82f6" class="glow" />
+  <path d="M12 12v4" />
+</svg>

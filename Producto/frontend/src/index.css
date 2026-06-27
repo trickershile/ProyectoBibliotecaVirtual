@@ -1,0 +1,213 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background: radial-gradient(circle at top, #1a2233 0%, #0f1420 45%, #0b0f14 100%);
+  color: #d8d7e5;
+}
+
+.pastel-theme {
+  min-height: 100vh;
+  background: radial-gradient(circle at top, #1a2233 0%, #0f1420 45%, #0b0f14 100%);
+  color: #d8d7e5;
+}
+
+.pastel-theme .bg-\[\#0b111b\],
+.pastel-theme .bg-\[\#0a111b\],
+.pastel-theme .bg-\[\#0f1724\],
+.pastel-theme .bg-\[\#112132\],
+.pastel-theme .bg-\[\#1e1e1e\],
+.pastel-theme .bg-\[\#121212\],
+.pastel-theme .bg-\[\#0a0a0a\],
+.pastel-theme .bg-black,
+.pastel-theme .bg-black\/50,
+.pastel-theme .bg-gray-900,
+.pastel-theme .bg-gray-900\/10,
+.pastel-theme .bg-gray-900\/30,
+.pastel-theme .bg-gray-900\/50,
+.pastel-theme .bg-white {
+  background-color: #0f1724 !important;
+}
+
+.pastel-theme .bg-gray-800,
+.pastel-theme .bg-gray-800\/10,
+.pastel-theme .bg-gray-800\/50,
+.pastel-theme .bg-gray-700 {
+  background-color: #151c2b !important;
+}
+
+.pastel-theme .bg-blue-600,
+.pastel-theme .bg-blue-700,
+.pastel-theme .bg-blue-600\/10,
+.pastel-theme .bg-blue-600\/20,
+.pastel-theme .bg-blue-500\/10,
+.pastel-theme .bg-cyan-500\/10,
+.pastel-theme .bg-purple-500\/10,
+.pastel-theme .bg-red-500\/10,
+.pastel-theme .bg-green-500\/10,
+.pastel-theme .bg-yellow-500\/10,
+.pastel-theme .bg-orange-500\/10,
+.pastel-theme .bg-red-600,
+.pastel-theme .bg-purple-600,
+.pastel-theme .bg-purple-700 {
+  background-color: #111a28 !important;
+}
+
+.pastel-theme .border-\[\#24364d\],
+.pastel-theme .border-\[\#2f6b8d\],
+.pastel-theme .border-\[\#27364b\],
+.pastel-theme .border-\[\#2b3e57\],
+.pastel-theme .border-\[\#6b2741\],
+.pastel-theme .border-\[\#215340\],
+.pastel-theme .border-gray-900,
+.pastel-theme .border-gray-800,
+.pastel-theme .border-gray-800\/20,
+.pastel-theme .border-gray-800\/30,
+.pastel-theme .border-gray-800\/50,
+.pastel-theme .border-gray-700,
+.pastel-theme .border-t-gray-800,
+.pastel-theme .border-b-gray-800,
+.pastel-theme .border-r-gray-800,
+.pastel-theme .border-l-gray-800,
+.pastel-theme .border-t-gray-300,
+.pastel-theme .border-b-gray-300,
+.pastel-theme .border-r-gray-300,
+.pastel-theme .border-l-gray-300 {
+  border-color: #2a3650 !important;
+}
+
+.pastel-theme .border-blue-500,
+.pastel-theme .border-blue-500\/20,
+.pastel-theme .border-blue-500\/30,
+.pastel-theme .border-blue-500\/50,
+.pastel-theme .border-cyan-500\/50 {
+  border-color: #a7d8ff !important;
+}
+
+.pastel-theme .border-green-500,
+.pastel-theme .border-green-500\/20,
+.pastel-theme .border-green-500\/30 {
+  border-color: #b9fbc0 !important;
+}
+
+.pastel-theme .border-purple-500,
+.pastel-theme .border-purple-500\/50 {
+  border-color: #cdb4db !important;
+}
+
+.pastel-theme .border-yellow-500\/30 {
+  border-color: #ffd6a5 !important;
+}
+
+.pastel-theme .border-red-500,
+.pastel-theme .border-red-500\/30,
+.pastel-theme .border-red-500\/50,
+.pastel-theme .border-orange-500\/50 {
+  border-color: #ffadad !important;
+}
+
+.pastel-theme .text-\[\#d7e3f0\],
+.pastel-theme .text-\[\#b7c5d3\],
+.pastel-theme .text-\[\#9bb0c5\],
+.pastel-theme .text-\[\#87a0b7\],
+.pastel-theme .text-white {
+  color: #e7e6f4 !important;
+}
+
+.pastel-theme .text-black,
+.pastel-theme .text-gray-300 {
+  color: #d8d7e5 !important;
+}
+
+.pastel-theme .text-gray-400,
+.pastel-theme .text-gray-500,
+.pastel-theme .text-gray-600,
+.pastel-theme .text-gray-800 {
+  color: #aab3c2 !important;
+}
+
+.pastel-theme .text-\[\#6ee7ff\],
+.pastel-theme .text-blue-400,
+.pastel-theme .text-blue-500,
+.pastel-theme .text-cyan-500 {
+  color: #a7d8ff !important;
+}
+
+.pastel-theme .text-\[\#75f0b5\],
+.pastel-theme .text-green-400,
+.pastel-theme .text-green-500 {
+  color: #b9fbc0 !important;
+}
+
+.pastel-theme .text-\[\#ffd166\],
+.pastel-theme .text-yellow-400,
+.pastel-theme .text-yellow-500 {
+  color: #ffd6a5 !important;
+}
+
+.pastel-theme .text-\[\#ff8ba7\],
+.pastel-theme .text-red-500,
+.pastel-theme .text-red-600,
+.pastel-theme .text-orange-500 {
+  color: #ffadad !important;
+}
+
+.pastel-theme .text-purple-500 {
+  color: #cdb4db !important;
+}
+
+.pastel-theme .hover\:text-white:hover,
+.pastel-theme .hover\:text-black:hover,
+.pastel-theme .hover\:text-blue-400:hover,
+.pastel-theme .hover\:text-blue-500:hover,
+.pastel-theme .hover\:text-red-500:hover,
+.pastel-theme .hover\:text-green-500:hover,
+.pastel-theme .hover\:text-purple-500:hover,
+.pastel-theme .hover\:text-orange-500:hover {
+  color: #ffffff !important;
+}
+
+.pastel-theme .hover\:bg-white:hover,
+.pastel-theme .hover\:bg-blue-500:hover,
+.pastel-theme .hover\:bg-blue-600:hover,
+.pastel-theme .hover\:bg-blue-700:hover,
+.pastel-theme .hover\:bg-red-500:hover,
+.pastel-theme .hover\:bg-red-600:hover,
+.pastel-theme .hover\:bg-green-500:hover,
+.pastel-theme .hover\:bg-green-600:hover,
+.pastel-theme .hover\:bg-purple-500:hover,
+.pastel-theme .hover\:bg-orange-500:hover,
+.pastel-theme .hover\:bg-gray-700:hover {
+  background-color: #1a2233 !important;
+}
+
+.pastel-theme .hover\:border-blue-500:hover,
+.pastel-theme .hover\:border-yellow-500\/30:hover {
+  border-color: #a7d8ff !important;
+}
+
+.pastel-theme input,
+.pastel-theme textarea,
+.pastel-theme select {
+  background: #0b0f14;
+  color: #e7e6f4;
+  border-color: #2a3650;
+}
+
+.pastel-theme input::placeholder,
+.pastel-theme textarea::placeholder {
+  color: #8f97a7;
+}
+
+.pastel-theme input:focus,
+.pastel-theme textarea:focus,
+.pastel-theme select:focus {
+  border-color: #a7d8ff !important;
+  box-shadow: 0 0 0 1px #a7d8ff;
+}
