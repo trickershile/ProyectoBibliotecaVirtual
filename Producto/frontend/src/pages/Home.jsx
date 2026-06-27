@@ -2,6 +2,10 @@ import Hero from '../components/Hero';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import Carousel from '../components/Carousel';
+<<<<<<< HEAD
+=======
+import AnimatedTerminal from '../components/AnimatedTerminal';
+>>>>>>> d92f6350cb9d40ed38561f8ea49b8482c32fc335
 
 const Home = () => {
   const mockBooks = [
@@ -112,6 +116,18 @@ const Home = () => {
         </div>
       </section>
 
+<<<<<<< HEAD
+=======
+      {/* SOBRE NUESTRO SITIO (ANIMACIÓN EN BUCLE CORREGIDA) */}
+      <section className="px-4">
+        <h2 className="text-3xl font-bold text-white mb-10 text-center font-mono tracking-tighter uppercase border-b border-gray-800 pb-4 max-w-md mx-auto">
+          {'//'} SOBRE NUESTRO SITIO
+        </h2>
+        {/* Cerramos el componente de forma limpia para que ejecute su propio bucle interno */}
+        <AnimatedTerminal />
+      </section>
+
+>>>>>>> d92f6350cb9d40ed38561f8ea49b8482c32fc335
       {/* LIBROS DESTACADOS */}
       <section>
         <div className="flex flex-col sm:flex-row justify-between items-center mb-12 px-4 space-y-4 sm:space-y-0">
@@ -152,4 +168,8 @@ const Home = () => {
   );
 };
 
+<<<<<<< HEAD
 export default Home;
+=======
+export default Home;
+>>>>>>> d92f6350cb9d40ed38561f8ea49b8482c32fc335

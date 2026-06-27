@@ -22,9 +22,12 @@ wheels/
 MANIFEST
 .env
 .venv
+<<<<<<< HEAD
 .venv-*/
 .venv-auth/
 .venv-gateway/
+=======
+>>>>>>> d92f6350cb9d40ed38561f8ea49b8482c32fc335
 env/
 venv/
 ENV/
@@ -42,8 +45,11 @@ yarn-error.log*
 .env.development.local
 .env.test.local
 .env.production.local
+<<<<<<< HEAD
 !Producto/frontend/src/lib/
 !Producto/frontend/src/lib/**
+=======
+>>>>>>> d92f6350cb9d40ed38561f8ea49b8482c32fc335
 
 # IDEs
 .vscode/

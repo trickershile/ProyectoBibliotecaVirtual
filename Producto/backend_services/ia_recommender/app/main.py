@@ -58,8 +58,11 @@ async def _shutdown():
     Cierre limpio de conexiones externas.
     """
     await close_mongo_client()
+<<<<<<< HEAD
     from app.database import cache_client
     cache_client.close()
+=======
+>>>>>>> d92f6350cb9d40ed38561f8ea49b8482c32fc335
 
 REQUEST_COUNT = Counter("http_requests_total", "Total HTTP requests", ["service", "method", "path", "status"])
 REQUEST_LATENCY = Histogram("http_request_duration_seconds", "HTTP request latency in seconds", ["service", "method", "path"])
@@ -67,6 +70,7 @@ app.mount("/metrics", make_asgi_app())
 
 @app.middleware("http")
 async def metrics_middleware(request, call_next):
+<<<<<<< HEAD
     start = time.time()
     response = None
     try:
@@ -77,6 +81,20 @@ async def metrics_middleware(request, call_next):
         status_code = response.status_code if response else 500
         REQUEST_COUNT.labels("ia_recommender", request.method, request.url.path, str(status_code)).inc()
         REQUEST_LATENCY.labels("ia_recommender", request.method, request.url.path).observe(duration)
+=======
+    """
+    Middleware de métricas (Prometheus).
+    """
+    start = time.time()
+    try:
+        response = await call_next(request)
+    finally:
+        duration = time.time() - start
+        status_code = getattr(locals().get("response", None), "status_code", 500)
+        REQUEST_COUNT.labels("ia_recommender", request.method, request.url.path, str(status_code)).inc()
+        REQUEST_LATENCY.labels("ia_recommender", request.method, request.url.path).observe(duration)
+    return response
+>>>>>>> d92f6350cb9d40ed38561f8ea49b8482c32fc335
 
 
 @app.get("/ia/health")

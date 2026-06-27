@@ -45,9 +45,13 @@ export const getCartCount = async () => {
     const items = await cartApi.getItems();
     return (items || []).reduce((total, item) => total + (item.cantidad || 1), 0);
   } catch (error) {
+<<<<<<< HEAD
     if (!String(error?.message || '').toLowerCase().includes('debes iniciar sesion')) {
       console.error('Error al leer el carrito remoto:', error);
     }
+=======
+    console.error('Error al leer el carrito remoto:', error);
+>>>>>>> d92f6350cb9d40ed38561f8ea49b8482c32fc335
     return 0;
   }
 };
