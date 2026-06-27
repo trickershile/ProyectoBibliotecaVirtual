@@ -2,25 +2,25 @@ import { Link } from 'react-router-dom';
 
 const Hero = () => {
   return (
-    <div className="bg-gradient-to-br from-[#1a2233] to-[#0f1724] text-[#e7e6f4] py-20 px-4 sm:px-6 lg:px-8 text-center rounded-3xl mx-4 my-8 border border-[#2a3650] shadow-[0_20px_60px_rgba(0,0,0,0.45)]">
+    <div className="mx-4 my-8 rounded-3xl border-2 border-[#aa7f5d] bg-gradient-to-br from-[#fff7ee] via-[#efdcc8] to-[#d8bb9e] px-4 py-20 text-center text-[#4b3525] shadow-[0_24px_60px_rgba(95,69,47,0.18)] sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-4xl md:text-6xl font-extrabold mb-6">
           Descubre un Mundo de Conocimiento en Línea
         </h1>
-        <p className="text-xl text-[#aab3c2] mb-10 leading-relaxed">
+        <p className="mb-10 text-xl leading-relaxed text-[#5f4633]">
           Accede a una colección ilimitada de libros, audiolibros y recursos educativos gratuitos. 
           Tu viaje de aprendizaje comienza aquí mismo, sin complicaciones.
         </p>
         <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
           <Link 
             to="/register"
-            className="bg-[#1b2a3a] text-[#a7d8ff] px-8 py-4 rounded-xl font-bold text-lg hover:bg-[#24354a] transition shadow-lg text-center border border-[#a7d8ff]"
+            className="rounded-xl border-2 border-[#8f6443] bg-[#8f6443] px-8 py-4 text-center text-lg font-bold text-[#fffaf5] shadow-lg transition hover:bg-[#6f4e36]"
           >
             Comienza Gratis
           </Link>
           <Link 
             to="/catalogo"
-            className="bg-[#182a22] text-[#b9fbc0] px-8 py-4 rounded-xl font-bold text-lg hover:bg-[#1f3a30] transition shadow-lg text-center border border-[#b9fbc0]"
+            className="rounded-xl border-2 border-[#aa7f5d] bg-[#fffaf4] px-8 py-4 text-center text-lg font-bold text-[#5a3f2b] shadow-lg transition hover:bg-[#ead4bd]"
           >
             Explorar Catálogo
           </Link>

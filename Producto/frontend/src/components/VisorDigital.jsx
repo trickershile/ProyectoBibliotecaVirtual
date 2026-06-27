@@ -3,7 +3,7 @@ import { X } from 'lucide-react';
 
 const blockKeys = new Set(['s', 'p', 'u', 'i', 'j']);
 
-const VisorDigital = ({ url, onClose, title = 'LECTOR_DIGITAL' }) => {
+const VisorDigital = ({ url, onClose, title = 'Lector digital' }) => {
   useEffect(() => {
     const onContextMenu = (e) => {
       e.preventDefault();

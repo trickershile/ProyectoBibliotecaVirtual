@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Button from '../components/Button';
 import { notificationsApi } from '../api/notifications';
+import { theme } from '../lib/theme';
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -33,67 +34,68 @@ const Contact = () => {
         asunto: 'Solicitud de Reseña',
         mensaje: '',
       });
-      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: 'Mensaje enviado correctamente_' } }));
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: 'Mensaje enviado correctamente.' } }));
     } catch (error) {
       console.error('Error al enviar contacto:', error);
-      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: '[!] No se pudo enviar el mensaje_' } }));
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: 'No se pudo enviar el mensaje.' } }));
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="max-w-2xl mx-auto py-12 px-4 font-mono">
-      <div className="border-b border-gray-800 pb-6 mb-8 text-center">
-        <h1 className="text-4xl font-bold text-white tracking-tighter uppercase text-orange-500">
-          {'>'} CANAL_CONTACTO
+    <div className={theme.pageShell}>
+      <div className="mx-auto w-full max-w-2xl">
+      <div className={theme.centeredHeader}>
+        <h1 className={theme.pageTitle}>
+          Contacto
         </h1>
-        <p className="text-gray-400 mt-2">Formulario para autores y colaboraciones_</p>
+        <p className="mt-2 text-[#6f523c]">Formulario para autores, editoriales y colaboraciones.</p>
       </div>
       
-      <form onSubmit={handleSubmit} className="bg-gray-900/50 border border-gray-800 rounded-2xl p-8 space-y-6">
+      <form onSubmit={handleSubmit} className={`${theme.sectionCard} space-y-6 p-8`}>
         <div>
-          <label className="block text-gray-500 text-[10px] font-bold mb-1 uppercase tracking-widest">NOMBRE_AUTOR_O_ENTIDAD</label>
+          <label className={theme.label}>Nombre o entidad</label>
           <input 
             type="text" 
             name="nombre"
             value={formData.nombre}
             onChange={handleChange}
-            className="w-full bg-black/50 border border-gray-800 rounded-lg px-4 py-2 text-white focus:border-orange-500 outline-none transition-all text-sm"
+            className={theme.input}
             placeholder="Ej: Editorial Maipú o Juan Pérez"
             required
           />
         </div>
         <div>
-          <label className="block text-gray-500 text-[10px] font-bold mb-1 uppercase tracking-widest">CORREO_ELECTRONICO</label>
+          <label className={theme.label}>Correo electrónico</label>
           <input 
             type="email"
             name="email"
             value={formData.email}
             onChange={handleChange}
-            className="w-full bg-black/50 border border-gray-800 rounded-lg px-4 py-2 text-white focus:border-orange-500 outline-none transition-all text-sm"
+            className={theme.input}
             placeholder="contacto@ejemplo.cl"
             required
           />
         </div>
         <div>
-          <label className="block text-gray-500 text-[10px] font-bold mb-1 uppercase tracking-widest">TELEFONO</label>
+          <label className={theme.label}>Teléfono</label>
           <input 
             type="text"
             name="telefono"
             value={formData.telefono}
             onChange={handleChange}
-            className="w-full bg-black/50 border border-gray-800 rounded-lg px-4 py-2 text-white focus:border-orange-500 outline-none transition-all text-sm"
+            className={theme.input}
             placeholder="+56 9 1234 5678"
           />
         </div>
         <div>
-          <label className="block text-gray-500 text-[10px] font-bold mb-1 uppercase tracking-widest">ASUNTO</label>
+          <label className={theme.label}>Asunto</label>
           <select
             name="asunto"
             value={formData.asunto}
             onChange={handleChange}
-            className="w-full bg-black/50 border border-gray-800 rounded-lg px-4 py-2 text-white focus:border-orange-500 outline-none transition-all text-sm"
+            className={theme.select}
           >
             <option>Solicitud de Reseña</option>
             <option>Propuesta de Colaboración</option>
@@ -102,21 +104,22 @@ const Contact = () => {
           </select>
         </div>
         <div>
-          <label className="block text-gray-500 text-[10px] font-bold mb-1 uppercase tracking-widest">MENSAJE_TRANSCRIPCIÓN</label>
+          <label className={theme.label}>Mensaje</label>
           <textarea 
             rows="5"
             name="mensaje"
             value={formData.mensaje}
             onChange={handleChange}
-            className="w-full bg-black/50 border border-gray-800 rounded-lg px-4 py-2 text-white focus:border-orange-500 outline-none transition-all text-sm resize-none"
+            className={theme.textarea}
             placeholder="Escribe tu mensaje aquí..."
             required
           />
         </div>
-        <Button type="submit" variant="primary" className="w-full bg-orange-600 hover:bg-orange-700 border-orange-500 shadow-[0_0_20px_rgba(234,88,12,0.2)]">
-          {submitting ? './enviando...' : './enviar_solicitud'}
+        <Button type="submit" variant="primary" className="w-full py-3 text-sm shadow-[0_12px_24px_rgba(95,69,47,0.18)]">
+          {submitting ? 'Enviando...' : 'Enviar solicitud'}
         </Button>
       </form>
+      </div>
     </div>
   );
 };

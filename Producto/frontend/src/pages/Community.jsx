@@ -1,24 +1,27 @@
+import { theme } from '../lib/theme';
+
 const Community = () => {
   return (
-    <div className="max-w-7xl mx-auto py-12 px-4 font-mono">
-      <div className="border-b border-gray-800 pb-6 mb-8">
-        <h1 className="text-4xl font-bold text-white tracking-tighter uppercase text-green-500">
-          {'>'} NODO_COMUNIDAD
+    <div className={theme.pageShell}>
+      <div className={theme.pageContainer}>
+      <div className={theme.pageHeader}>
+        <h1 className={theme.pageTitle}>
+          Comunidad
         </h1>
-        <p className="text-gray-400 mt-2">Ranking de usuarios, retos de lectura y debates_</p>
+        <p className={theme.pageSubtitle}>Ranking de lectores, retos de lectura y debates.</p>
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-8">
           <section>
-            <h2 className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-4">./RETOS_DE_LECTURA</h2>
-            <div className="bg-green-500/5 border border-green-500/20 rounded-2xl p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-white font-bold">RETO_ABRIL: "LITERATURA CHILENA"</h3>
-                <span className="text-green-500 text-xs font-bold">[45% COMPLETADO]</span>
+            <h2 className="mb-4 text-sm font-bold uppercase tracking-widest text-[#7f5c40]">Retos de lectura</h2>
+            <div className={`${theme.sectionCardCompact} bg-[#eef4e8] border-[#9faf92]`}>
+              <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <h3 className="font-bold text-[#5a3f2b]">Reto de abril: "Literatura chilena"</h3>
+                <span className="text-xs font-bold text-[#566b4a]">45% completado</span>
               </div>
-              <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden">
-                <div className="bg-green-500 h-full w-[45%] shadow-[0_0_10px_rgba(34,197,94,0.5)]"></div>
+              <div className="h-2 w-full overflow-hidden rounded-full bg-[#dce6d4]">
+                <div className="h-full w-[45%] bg-[#6f8a60] shadow-[0_0_10px_rgba(111,138,96,0.35)]"></div>
               </div>
             </div>
           </section>
@@ -26,20 +29,21 @@ const Community = () => {
         
         <div className="space-y-8">
           <section>
-            <h2 className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-4">./TOP_LECTORES</h2>
-            <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-4 space-y-4">
+            <h2 className="mb-4 text-sm font-bold uppercase tracking-widest text-[#7f5c40]">Top lectores</h2>
+            <div className={`${theme.sectionCardCompact} space-y-4 p-4`}>
               {[1, 2, 3].map(rank => (
-                <div key={rank} className="flex justify-between items-center p-2 border-b border-gray-800 last:border-0">
+                <div key={rank} className="flex flex-col gap-2 border-b-2 border-[#ead4bd] p-2 last:border-0 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-center gap-3">
-                    <span className="text-xs font-bold text-gray-500 font-mono">#{rank}</span>
-                    <span className="text-white text-sm">usuario_dev_{rank}</span>
+                    <span className="font-mono text-xs font-bold text-[#9d7553]">#{rank}</span>
+                    <span className="text-sm text-[#5a3f2b]">Lector {rank}</span>
                   </div>
-                  <span className="text-green-500 text-[10px] font-bold">{1000 - rank * 100} XP</span>
+                  <span className="text-[10px] font-bold text-[#566b4a]">{1000 - rank * 100} XP</span>
                 </div>
               ))}
             </div>
           </section>
         </div>
+      </div>
       </div>
     </div>
   );

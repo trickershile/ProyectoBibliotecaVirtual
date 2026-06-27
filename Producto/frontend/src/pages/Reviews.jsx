@@ -3,6 +3,8 @@ import { BookOpen, CheckCircle2, Loader2, MessageSquare, Send, ShieldCheck, Star
 import { booksApi } from '../api/books';
 import { reviewsApi } from '../api/reviews';
 import { withApiOrigin } from '../lib/supabase';
+import { formatReviewStatus } from '../lib/labels';
+import { statusStyles, theme } from '../lib/theme';
 
 const renderStars = (rating) =>
   Array.from({ length: 5 }, (_, index) => (
@@ -74,7 +76,7 @@ const Reviews = () => {
     } catch (error) {
       console.error('Error al cargar libros para reseñas:', error);
       window.dispatchEvent(new CustomEvent('show-toast', {
-        detail: { message: '[!] No se pudo cargar el catálogo para reseñas_' }
+        detail: { message: 'No se pudo cargar el catálogo para reseñas.' }
       }));
     } finally {
       setLoadingBooks(false);
@@ -120,7 +122,7 @@ const Reviews = () => {
     e.preventDefault();
     if (!sbUser || !selectedBookId) {
       window.dispatchEvent(new CustomEvent('show-toast', {
-        detail: { message: '[!] Debes iniciar sesión y elegir un libro_' }
+        detail: { message: 'Debes iniciar sesión y elegir un libro.' }
       }));
       return;
     }
@@ -147,12 +149,12 @@ const Reviews = () => {
       }
       fetchReviews(selectedBookId);
       window.dispatchEvent(new CustomEvent('show-toast', {
-        detail: { message: 'Reseña enviada. Quedó pendiente de moderación_' }
+        detail: { message: 'Reseña enviada. Quedó pendiente de moderación.' }
       }));
     } catch (error) {
       console.error('Error al guardar reseña:', error);
       window.dispatchEvent(new CustomEvent('show-toast', {
-        detail: { message: '[!] No se pudo guardar la reseña_' }
+        detail: { message: 'No se pudo guardar la reseña.' }
       }));
     } finally {
       setSubmittingReview(false);
@@ -173,12 +175,12 @@ const Reviews = () => {
         fetchPendingReviews();
       }
       window.dispatchEvent(new CustomEvent('show-toast', {
-        detail: { message: 'Reseña eliminada correctamente_' }
+        detail: { message: 'Reseña eliminada correctamente.' }
       }));
     } catch (error) {
       console.error('Error al eliminar reseña:', error);
       window.dispatchEvent(new CustomEvent('show-toast', {
-        detail: { message: '[!] No se pudo eliminar la reseña_' }
+        detail: { message: 'No se pudo eliminar la reseña.' }
       }));
     }
   };
@@ -192,12 +194,12 @@ const Reviews = () => {
         await fetchReviews(selectedBookId);
       }
       window.dispatchEvent(new CustomEvent('show-toast', {
-        detail: { message: `Reseña ${estado === 'approved' ? 'aprobada' : 'rechazada'} correctamente_` }
+        detail: { message: `Reseña ${estado === 'approved' ? 'aprobada' : 'rechazada'} correctamente.` }
       }));
     } catch (error) {
       console.error('Error al moderar reseña:', error);
       window.dispatchEvent(new CustomEvent('show-toast', {
-        detail: { message: '[!] No se pudo moderar la reseña_' }
+        detail: { message: 'No se pudo moderar la reseña.' }
       }));
     } finally {
       setModerating(false);
@@ -205,27 +207,28 @@ const Reviews = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto py-12 px-4 font-mono">
-      <div className="border-b border-gray-800 pb-6 mb-8">
-        <h1 className="text-4xl font-bold text-white tracking-tighter uppercase text-purple-500">
-          {'>'} ARCHIVO_DE_CRÍTICAS
+    <div className={theme.pageShell}>
+      <div className={theme.pageContainer}>
+      <div className={theme.pageHeader}>
+        <h1 className={theme.pageTitle}>
+          Reseñas de la comunidad
         </h1>
-        <p className="text-gray-400 mt-2">Reseñas reales conectadas al backend con flujo de moderación_</p>
+        <p className={theme.pageSubtitle}>Reseñas reales conectadas al backend con flujo de moderación.</p>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
         <div className="xl:col-span-2 space-y-6">
-          <div className="bg-gray-900/40 border border-gray-800 rounded-2xl p-6 space-y-4">
+          <div className={`${theme.sectionCard} space-y-4`}>
             <div className="flex flex-col md:flex-row md:items-center gap-4 justify-between">
               <div>
-                <p className="text-[10px] text-purple-400 font-bold uppercase tracking-widest">SELECCIÓN_LIBRO</p>
-                <h2 className="text-xl font-bold text-white mt-1">Explora y evalúa un libro del catálogo</h2>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[#7f5c40]">Selección de libro</p>
+                <h2 className="mt-1 text-xl font-bold text-[#5a3f2b]">Explora y evalúa un libro del catálogo</h2>
               </div>
-              <div className="min-w-[260px]">
+              <div className="w-full md:max-w-[260px]">
                 <select
                   value={selectedBookId}
                   onChange={(e) => setSelectedBookId(e.target.value)}
-                  className="w-full bg-black/40 border border-gray-800 rounded-xl px-4 py-3 text-sm text-gray-200 outline-none focus:border-purple-500"
+                  className={theme.select}
                   disabled={loadingBooks || books.length === 0}
                 >
                   {loadingBooks ? (
@@ -242,29 +245,29 @@ const Reviews = () => {
             </div>
 
             {selectedBook && (
-              <div className="grid grid-cols-1 md:grid-cols-[auto,1fr] gap-5 items-center border border-gray-800 rounded-2xl p-4 bg-black/20">
-                <div className="w-24 h-32 bg-black/40 rounded-xl overflow-hidden border border-gray-800">
+              <div className="grid grid-cols-1 items-center gap-5 rounded-2xl border-2 border-[#d2b08f] bg-[#f8ede2] p-4 md:grid-cols-[auto,1fr]">
+                <div className="h-32 w-24 overflow-hidden rounded-xl border-2 border-[#d2b08f] bg-[#ead4bd]">
                   {selectedBook.image_url ? (
                     <img src={withApiOrigin(selectedBook.image_url)} alt={selectedBook.title} className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-700">
+                    <div className="flex h-full w-full items-center justify-center text-[#9d7553]">
                       <BookOpen className="w-10 h-10" />
                     </div>
                   )}
                 </div>
                 <div className="space-y-3">
                   <div>
-                    <p className="text-white font-bold uppercase tracking-tight">{selectedBook.title}</p>
-                    <p className="text-[11px] text-gray-500 italic">{selectedBook.author}</p>
+                    <p className="font-bold uppercase tracking-tight text-[#5a3f2b]">{selectedBook.title}</p>
+                    <p className="text-[11px] italic text-[#7f5c40]">{selectedBook.author}</p>
                   </div>
                   <div className="flex flex-wrap items-center gap-3 text-[10px] uppercase font-bold">
-                    <span className="px-3 py-1 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/20">
+                    <span className={`px-3 py-1 ${theme.statusBadge} ${statusStyles.info}`}>
                       {(selectedBook.categories && selectedBook.categories[0]) || 'General'}
                     </span>
-                    <span className="text-gray-400">{reviews.length} reseñas aprobadas</span>
-                    <span className="text-yellow-400">Promedio: {averageRating}/5</span>
+                    <span className="text-[#6f523c]">{reviews.length} reseñas aprobadas</span>
+                    <span className="text-[#8a633f]">Promedio: {averageRating}/5</span>
                   </div>
-                  <p className="text-sm text-gray-400 leading-relaxed">
+                  <p className="text-sm leading-relaxed text-[#6f523c]">
                     {selectedBook.description || 'Este libro aún no tiene descripción extendida en el sistema.'}
                   </p>
                 </div>
@@ -272,28 +275,28 @@ const Reviews = () => {
             )}
           </div>
 
-          <div className="bg-gray-900/40 border border-gray-800 rounded-2xl p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-gray-800 pb-3">
-              <h2 className="text-[11px] font-black text-white uppercase tracking-[0.2em] flex items-center gap-2">
-                <MessageSquare className="w-4 h-4 text-purple-400" /> TU_RESEÑA
+          <div className={`${theme.sectionCard} space-y-4`}>
+            <div className="flex items-center justify-between border-b-2 border-[#d2b08f] pb-3">
+              <h2 className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.2em] text-[#5a3f2b]">
+                <MessageSquare className="w-4 h-4 text-[#8f6443]" /> Tu reseña
               </h2>
               {currentReview && (
                 <span className={`text-[9px] font-bold uppercase ${
-                  currentReview.estado === 'approved' ? 'text-green-400' : currentReview.estado === 'rejected' ? 'text-red-400' : 'text-yellow-400'
+                  currentReview.estado === 'approved' ? 'text-[#566b4a]' : currentReview.estado === 'rejected' ? 'text-[#8a3f34]' : 'text-[#8a633f]'
                 }`}>
-                  estado: {currentReview.estado}
+                  Estado: {formatReviewStatus(currentReview.estado)}
                 </span>
               )}
             </div>
 
             {!sbUser ? (
-              <p className="text-[11px] text-gray-500 uppercase tracking-widest">Inicia sesión para publicar una reseña_</p>
+              <p className="text-[11px] uppercase tracking-widest text-[#7f5c40]">Inicia sesión para publicar una reseña.</p>
             ) : !selectedBookId ? (
-              <p className="text-[11px] text-gray-500 uppercase tracking-widest">Selecciona un libro para reseñar_</p>
+              <p className="text-[11px] uppercase tracking-widest text-[#7f5c40]">Selecciona un libro para reseñar.</p>
             ) : (
               <form onSubmit={handleSubmitReview} className="space-y-4">
                 <div>
-                  <label className="block text-[9px] font-bold uppercase tracking-widest text-gray-500 mb-2">CALIFICACIÓN</label>
+                  <label className="mb-2 block text-[9px] font-bold uppercase tracking-widest text-[#7f5c40]">Calificación</label>
                   <div className="flex gap-2">
                     {[1, 2, 3, 4, 5].map((value) => (
                       <button
@@ -302,8 +305,8 @@ const Reviews = () => {
                         onClick={() => setReviewForm((current) => ({ ...current, rating: value }))}
                         className={`p-2 rounded-lg border transition-all ${
                           reviewForm.rating >= value
-                            ? 'border-yellow-400 bg-yellow-400/10 text-yellow-300'
-                            : 'border-gray-800 bg-black/30 text-gray-600'
+                            ? 'border-[#d7b988] bg-[#fff4df] text-[#8a633f]'
+                            : 'border-[#d2b08f] bg-[#fffaf4] text-[#9d7553]'
                         }`}
                       >
                         <Star className={`w-4 h-4 ${reviewForm.rating >= value ? 'fill-current' : ''}`} />
@@ -313,12 +316,12 @@ const Reviews = () => {
                 </div>
 
                 <div>
-                  <label className="block text-[9px] font-bold uppercase tracking-widest text-gray-500 mb-2">COMENTARIO</label>
+                  <label className="mb-2 block text-[9px] font-bold uppercase tracking-widest text-[#7f5c40]">Comentario</label>
                   <textarea
                     rows="5"
                     value={reviewForm.comment}
                     onChange={(e) => setReviewForm((current) => ({ ...current, comment: e.target.value }))}
-                    className="w-full bg-black/30 border border-gray-800 rounded-xl px-4 py-3 text-sm text-gray-200 outline-none focus:border-purple-500 resize-none"
+                    className={theme.textarea}
                     placeholder="Escribe tu evaluación del libro..."
                     required
                   />
@@ -328,19 +331,19 @@ const Reviews = () => {
                   <button
                     type="submit"
                     disabled={submittingReview}
-                    className="px-5 py-3 bg-purple-600 hover:bg-purple-500 disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2"
+                    className={`${theme.primaryButton} flex items-center gap-2 px-5 py-3 text-[10px] disabled:cursor-not-allowed disabled:opacity-60`}
                   >
                     {submittingReview ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                    {currentReview ? 'ACTUALIZAR_RESEÑA' : 'ENVIAR_RESEÑA'}
+                    {currentReview ? 'Actualizar reseña' : 'Enviar reseña'}
                   </button>
                   {currentReview?.id && (
                     <button
                       type="button"
                       onClick={() => handleDeleteReview(currentReview.id)}
-                      className="px-5 py-3 border border-red-500/20 text-red-400 hover:bg-red-500/10 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2"
+                      className={`${theme.dangerButton} flex items-center gap-2 px-5 py-3 text-[10px]`}
                     >
                       <Trash2 className="w-4 h-4" />
-                      ELIMINAR
+                      Eliminar
                     </button>
                   )}
                 </div>
@@ -350,36 +353,36 @@ const Reviews = () => {
 
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold text-white uppercase tracking-tighter">RESEÑAS_PUBLICADAS</h2>
-              {loadingReviews && <Loader2 className="w-4 h-4 text-purple-400 animate-spin" />}
+              <h2 className="text-xl font-bold uppercase tracking-tighter text-[#5a3f2b]">Reseñas publicadas</h2>
+              {loadingReviews && <Loader2 className="w-4 h-4 animate-spin text-[#8f6443]" />}
             </div>
 
             {reviews.length === 0 && !loadingReviews ? (
-              <div className="text-center py-16 border-2 border-dashed border-gray-800 rounded-2xl bg-gray-900/10">
-                <MessageSquare className="w-10 h-10 text-gray-800 mx-auto mb-4" />
-                <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest">Aún no hay reseñas aprobadas para este libro_</p>
+              <div className={`${theme.emptyState} py-16`}>
+                <MessageSquare className="mx-auto mb-4 h-10 w-10 text-[#b9926d]" />
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[#7f5c40]">Aún no hay reseñas aprobadas para este libro.</p>
               </div>
             ) : (
               <div className="space-y-4">
                 {reviews.map((review) => (
-                  <div key={review.id} className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6 border-l-4 border-l-purple-500">
+                  <div key={review.id} className="rounded-2xl border-2 border-[#b9926d] border-l-[6px] border-l-[#8f6443] bg-[#fffaf4] p-6">
                     <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
                       <div>
-                        <div className="text-[10px] text-purple-400 font-bold uppercase tracking-widest">
-                          [RESEÑA #{review.id}]
+                        <div className="text-[10px] font-bold uppercase tracking-widest text-[#7f5c40]">
+                          Reseña #{review.id}
                         </div>
-                        <p className="text-[10px] text-gray-500 uppercase">
+                        <p className="text-[10px] uppercase text-[#9d7553]">
                           Usuario: {review.usuario_id === sbUser?.id ? 'TÚ' : review.usuario_id.slice(0, 8)}
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
                         {renderStars(review.rating)}
-                        <span className="text-gray-500 text-xs">{review.rating}/5</span>
+                        <span className="text-xs text-[#7f5c40]">{review.rating}/5</span>
                       </div>
                     </div>
-                    <p className="text-gray-300 text-sm leading-relaxed mb-4">{review.comentario}</p>
-                    <div className="text-[10px] text-gray-500 uppercase">
-                      PUBLICADO: {review.created_at ? new Date(review.created_at).toLocaleDateString() : 'Sin fecha'}
+                    <p className="mb-4 text-sm leading-relaxed text-[#5a3f2b]">{review.comentario}</p>
+                    <div className="text-[10px] uppercase text-[#9d7553]">
+                      Publicado: {review.created_at ? new Date(review.created_at).toLocaleDateString() : 'Sin fecha'}
                     </div>
                   </div>
                 ))}
@@ -389,57 +392,57 @@ const Reviews = () => {
         </div>
 
         <div className="space-y-6">
-          <div className="bg-gray-900/40 border border-gray-800 rounded-2xl p-6 space-y-3">
-            <h2 className="text-[11px] font-black text-white uppercase tracking-[0.2em] flex items-center gap-2">
-              <Star className="w-4 h-4 text-yellow-400" /> MÉTRICAS
+          <div className={`${theme.sectionCard} space-y-3`}>
+            <h2 className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.2em] text-[#5a3f2b]">
+              <Star className="w-4 h-4 text-[#b9926d]" /> Métricas
             </h2>
             <div className="space-y-2 text-[11px]">
               <div className="flex items-center justify-between">
-                <span className="text-gray-500 uppercase">Libro seleccionado</span>
-                <span className="text-white font-bold">{selectedBook ? 'Sí' : 'No'}</span>
+                <span className="uppercase text-[#7f5c40]">Libro seleccionado</span>
+                <span className="font-bold text-[#5a3f2b]">{selectedBook ? 'Sí' : 'No'}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-gray-500 uppercase">Promedio</span>
-                <span className="text-yellow-400 font-bold">{averageRating}/5</span>
+                <span className="uppercase text-[#7f5c40]">Promedio</span>
+                <span className="font-bold text-[#8a633f]">{averageRating}/5</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-gray-500 uppercase">Aprobadas</span>
-                <span className="text-purple-300 font-bold">{reviews.length}</span>
+                <span className="uppercase text-[#7f5c40]">Aprobadas</span>
+                <span className="font-bold text-[#5a3f2b]">{reviews.length}</span>
               </div>
             </div>
           </div>
 
           {isAdmin && (
-            <div className="bg-gray-900/40 border border-gray-800 rounded-2xl p-6 space-y-4">
-              <div className="flex items-center justify-between border-b border-gray-800 pb-3">
-                <h2 className="text-[11px] font-black text-white uppercase tracking-[0.2em] flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-emerald-400" /> MODERACIÓN
+            <div className={`${theme.sectionCard} space-y-4`}>
+              <div className="flex items-center justify-between border-b-2 border-[#d2b08f] pb-3">
+                <h2 className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.2em] text-[#5a3f2b]">
+                  <ShieldCheck className="w-4 h-4 text-[#6f8a60]" /> Moderación
                 </h2>
-                <span className="text-[9px] text-gray-500 font-bold">{pendingReviews.length} PENDIENTES</span>
+                <span className="text-[9px] font-bold text-[#7f5c40]">{pendingReviews.length} pendientes</span>
               </div>
 
               {pendingReviews.length === 0 ? (
-                <p className="text-[10px] text-gray-500 uppercase tracking-widest">No hay reseñas pendientes_</p>
+                <p className="text-[10px] uppercase tracking-widest text-[#7f5c40]">No hay reseñas pendientes.</p>
               ) : (
                 <div className="space-y-3">
                   {pendingReviews.slice(0, 8).map((review) => {
                     const reviewBook = books.find((book) => Number(book.id || book._id) === Number(review.libro_id));
                     return (
-                      <div key={review.id} className="border border-gray-800 rounded-xl p-4 bg-black/30 space-y-3">
+                      <div key={review.id} className="space-y-3 rounded-xl border-2 border-[#d2b08f] bg-[#f8ede2] p-4">
                         <div>
-                          <p className="text-[10px] font-bold text-white uppercase">
+                          <p className="text-[10px] font-bold uppercase text-[#5a3f2b]">
                             {reviewBook?.title || `Libro #${review.libro_id}`}
                           </p>
-                          <p className="text-[9px] text-gray-500 uppercase">Usuario: {review.usuario_id.slice(0, 8)}</p>
+                          <p className="text-[9px] uppercase text-[#9d7553]">Usuario: {review.usuario_id.slice(0, 8)}</p>
                         </div>
                         <div className="flex items-center gap-2">{renderStars(review.rating)}</div>
-                        <p className="text-[11px] text-gray-300 leading-relaxed">{review.comentario}</p>
+                        <p className="text-[11px] leading-relaxed text-[#5a3f2b]">{review.comentario}</p>
                         <div className="flex gap-2">
                           <button
                             type="button"
                             disabled={moderating}
                             onClick={() => handleModeration(review.id, 'approved')}
-                            className="flex-1 px-3 py-2 rounded-lg bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 text-[10px] font-black uppercase flex items-center justify-center gap-2"
+                            className={`${theme.successButton} flex flex-1 items-center justify-center gap-2 px-3 py-2 text-[10px]`}
                           >
                             <CheckCircle2 className="w-4 h-4" />
                             Aprobar
@@ -448,7 +451,7 @@ const Reviews = () => {
                             type="button"
                             disabled={moderating}
                             onClick={() => handleModeration(review.id, 'rejected')}
-                            className="flex-1 px-3 py-2 rounded-lg bg-red-500/10 text-red-300 border border-red-500/20 text-[10px] font-black uppercase flex items-center justify-center gap-2"
+                            className={`${theme.dangerButton} flex flex-1 items-center justify-center gap-2 px-3 py-2 text-[10px]`}
                           >
                             <XCircle className="w-4 h-4" />
                             Rechazar
@@ -463,6 +466,7 @@ const Reviews = () => {
           )}
         </div>
       </div>
+    </div>
     </div>
   );
 };

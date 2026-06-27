@@ -25,15 +25,43 @@ import {
   Activity,
 } from 'lucide-react';
 import { withApiOrigin } from '../lib/supabase';
+import {
+  formatItemType,
+  formatOrderStatus,
+  formatPaymentMethod,
+  formatPaymentStatus,
+  formatTrackingStatus,
+} from '../lib/labels';
+import { statusStyles, theme } from '../lib/theme';
 
 const STATUS_STYLES = {
-  pagado: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20',
-  pendiente: 'bg-yellow-500/10 text-yellow-300 border-yellow-500/20',
-  cancelado: 'bg-red-500/10 text-red-300 border-red-500/20',
-  reembolsado: 'bg-fuchsia-500/10 text-fuchsia-300 border-fuchsia-500/20',
+  pagado: statusStyles.success,
+  pendiente: statusStyles.warning,
+  cancelado: statusStyles.danger,
+  reembolsado: statusStyles.accent,
+  confirmed: statusStyles.success,
+  approved: statusStyles.success,
+  rejected: statusStyles.danger,
+  en_preparacion: statusStyles.warning,
+  en_ruta: statusStyles.info,
+  entregado: statusStyles.success,
 };
 
-const getStatusClasses = (status) => STATUS_STYLES[status] || 'bg-blue-500/10 text-blue-300 border-blue-500/20';
+const DASHBOARD_STATUS_STYLES = {
+  pagado: 'border-[#a9cdbb] bg-[#eff9f3] text-[#4f7b67]',
+  pendiente: 'border-[#d9c29b] bg-[#fbf3e5] text-[#8a6b40]',
+  cancelado: 'border-[#dfb5b0] bg-[#fbefee] text-[#9b5550]',
+  reembolsado: 'border-[#d1c0e3] bg-[#f5effb] text-[#75618f]',
+  confirmed: 'border-[#a9cdbb] bg-[#eff9f3] text-[#4f7b67]',
+  approved: 'border-[#a9cdbb] bg-[#eff9f3] text-[#4f7b67]',
+  rejected: 'border-[#dfb5b0] bg-[#fbefee] text-[#9b5550]',
+  en_preparacion: 'border-[#d9c29b] bg-[#fbf3e5] text-[#8a6b40]',
+  en_ruta: 'border-[#b9d8ea] bg-[#f1f9fe] text-[#4f7898]',
+  entregado: 'border-[#a9cdbb] bg-[#eff9f3] text-[#4f7b67]',
+};
+
+const getStatusClasses = (status) => STATUS_STYLES[status] || statusStyles.info;
+const getDashboardStatusClasses = (status) => DASHBOARD_STATUS_STYLES[status] || 'border-[#b9d8ea] bg-[#f1f9fe] text-[#4f7898]';
 const getPercent = (value, total) => (total > 0 ? Math.min(100, Math.round((value / total) * 100)) : 0);
 
 const GestionLibros = () => {
@@ -190,10 +218,10 @@ const GestionLibros = () => {
     try {
       await booksApi.delete(id);
       setBooks((current) => current.filter((book) => (book._id || book.id) !== id));
-      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: 'Libro eliminado correctamente_' } }));
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: 'Libro eliminado correctamente.' } }));
     } catch (err) {
       console.error('Error al eliminar:', err);
-      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: '[!] Error al eliminar el libro_' } }));
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: 'No se pudo eliminar el libro.' } }));
     }
   };
 
@@ -211,15 +239,15 @@ const GestionLibros = () => {
 
       if (editingBook) {
         savedBook = await booksApi.update(editingBook._id || editingBook.id, finalFormData);
-        window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: 'Información actualizada_' } }));
+        window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: 'Información actualizada.' } }));
       } else {
         savedBook = await booksApi.create(finalFormData);
-        window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: 'Nuevo libro registrado_' } }));
+        window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: 'Nuevo libro registrado.' } }));
       }
 
       if (imageFile && (savedBook._id || savedBook.id)) {
         await booksApi.uploadImage(savedBook._id || savedBook.id, imageFile);
-        window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: 'Portada actualizada correctamente_' } }));
+        window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: 'Portada actualizada correctamente.' } }));
       }
 
       closeForm();
@@ -227,7 +255,7 @@ const GestionLibros = () => {
     } catch (err) {
       console.error('Error al guardar:', err);
       window.dispatchEvent(new CustomEvent('show-toast', {
-        detail: { message: '[!] Error al guardar los cambios_' },
+        detail: { message: 'No se pudieron guardar los cambios.' },
       }));
     } finally {
       setSubmitting(false);
@@ -239,10 +267,10 @@ const GestionLibros = () => {
       setOrderActionId(`status-${orderId}`);
       await ordersApi.updateStatus(orderId, status);
       await fetchOrders();
-      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: `Orden #${orderId} actualizada a ${status}_` } }));
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: `Orden #${orderId} actualizada a ${formatOrderStatus(status)}.` } }));
     } catch (err) {
       console.error('Error al actualizar orden:', err);
-      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: '[!] No se pudo actualizar la orden_' } }));
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: 'No se pudo actualizar la orden.' } }));
     } finally {
       setOrderActionId(null);
     }
@@ -253,10 +281,10 @@ const GestionLibros = () => {
       setOrderActionId(`cancel-${orderId}`);
       await ordersApi.cancel(orderId);
       await fetchOrders();
-      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: `Orden #${orderId} cancelada correctamente_` } }));
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: `Orden #${orderId} cancelada correctamente.` } }));
     } catch (err) {
       console.error('Error al cancelar orden:', err);
-      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: '[!] No se pudo cancelar la orden_' } }));
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: 'No se pudo cancelar la orden.' } }));
     } finally {
       setOrderActionId(null);
     }
@@ -267,10 +295,10 @@ const GestionLibros = () => {
       setOrderActionId(`refund-${orderId}`);
       await ordersApi.refund(orderId);
       await Promise.all([fetchOrders(), fetchPayments()]);
-      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: `Orden #${orderId} reembolsada correctamente_` } }));
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: `Orden #${orderId} reembolsada correctamente.` } }));
     } catch (err) {
       console.error('Error al reembolsar orden:', err);
-      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: '[!] No se pudo reembolsar la orden_' } }));
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: 'No se pudo reembolsar la orden.' } }));
     } finally {
       setOrderActionId(null);
     }
@@ -281,10 +309,10 @@ const GestionLibros = () => {
       setPaymentActionId(`confirm-${paymentId}`);
       await paymentsApi.confirm(paymentId);
       await Promise.all([fetchPayments(), fetchOrders()]);
-      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: `Pago #${paymentId} confirmado correctamente_` } }));
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: `Pago #${paymentId} confirmado correctamente.` } }));
     } catch (err) {
       console.error('Error al confirmar pago:', err);
-      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: '[!] No se pudo confirmar el pago_' } }));
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: 'No se pudo confirmar el pago.' } }));
     } finally {
       setPaymentActionId(null);
     }
@@ -295,10 +323,10 @@ const GestionLibros = () => {
       setPaymentActionId(`refund-${paymentId}`);
       await paymentsApi.refund(paymentId);
       await Promise.all([fetchPayments(), fetchOrders()]);
-      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: `Pago #${paymentId} reembolsado correctamente_` } }));
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: `Pago #${paymentId} reembolsado correctamente.` } }));
     } catch (err) {
       console.error('Error al reembolsar pago:', err);
-      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: '[!] No se pudo reembolsar el pago_' } }));
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: 'No se pudo reembolsar el pago.' } }));
     } finally {
       setPaymentActionId(null);
     }
@@ -313,10 +341,10 @@ const GestionLibros = () => {
       setPaymentActionId(`delete-${paymentId}`);
       await paymentsApi.delete(paymentId);
       await fetchPayments();
-      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: `Pago #${paymentId} eliminado correctamente_` } }));
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: `Pago #${paymentId} eliminado correctamente.` } }));
     } catch (err) {
       console.error('Error al eliminar pago:', err);
-      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: '[!] No se pudo eliminar el pago_' } }));
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: 'No se pudo eliminar el pago.' } }));
     } finally {
       setPaymentActionId(null);
     }
@@ -338,10 +366,10 @@ const GestionLibros = () => {
         sucursal_retiro_id: '',
       });
       await fetchTrackings();
-      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: 'Tracking creado correctamente_' } }));
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: 'Tracking creado correctamente.' } }));
     } catch (err) {
       console.error('Error al crear tracking:', err);
-      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: '[!] No se pudo crear el tracking_' } }));
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: 'No se pudo crear el tracking.' } }));
     } finally {
       setTrackingActionId(null);
     }
@@ -352,10 +380,10 @@ const GestionLibros = () => {
       setTrackingActionId(`status-${code}`);
       await shippingApi.updateTracking(code, { nuevo_estado: nuevoEstado });
       await fetchTrackings();
-      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: `Tracking ${code} actualizado a ${nuevoEstado}_` } }));
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: `Tracking ${code} actualizado a ${formatTrackingStatus(nuevoEstado)}.` } }));
     } catch (err) {
       console.error('Error al actualizar tracking:', err);
-      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: '[!] No se pudo actualizar el tracking_' } }));
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: 'No se pudo actualizar el tracking.' } }));
     } finally {
       setTrackingActionId(null);
     }
@@ -370,10 +398,10 @@ const GestionLibros = () => {
       setTrackingActionId(`delete-${code}`);
       await shippingApi.deleteTracking(code);
       await fetchTrackings();
-      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: `Tracking ${code} eliminado correctamente_` } }));
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: `Tracking ${code} eliminado correctamente.` } }));
     } catch (err) {
       console.error('Error al eliminar tracking:', err);
-      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: '[!] No se pudo eliminar el tracking_' } }));
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: 'No se pudo eliminar el tracking.' } }));
     } finally {
       setTrackingActionId(null);
     }
@@ -489,7 +517,7 @@ const GestionLibros = () => {
       <div className="min-h-screen bg-[#0a0a0a] text-white p-6 font-mono flex items-center justify-center">
         <div className="max-w-lg w-full border border-red-500/20 bg-gray-900/40 rounded-3xl p-8 text-center space-y-4">
           <ShieldAlert className="w-12 h-12 text-red-400 mx-auto" />
-          <h1 className="text-2xl font-black uppercase tracking-tighter">ACCESO_RESTRINGIDO</h1>
+          <h1 className="text-2xl font-black uppercase tracking-tighter">Acceso restringido</h1>
           <p className="text-sm text-gray-400">Esta sección requiere privilegios administrativos.</p>
         </div>
       </div>
@@ -497,58 +525,58 @@ const GestionLibros = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white p-6 font-mono">
-      <div className="max-w-7xl mx-auto space-y-8">
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 border-b border-gray-800 pb-6">
+    <div className={theme.pageShell}>
+      <div className={theme.pageContainer}>
+        <div className="flex flex-col items-start justify-between gap-4 border-b-2 border-[#b9926d] pb-6 lg:flex-row lg:items-center">
           <div>
-            <h1 className="text-3xl font-black tracking-tighter uppercase text-blue-500">CENTRO_ADMINISTRATIVO</h1>
-            <p className="text-gray-500 text-xs mt-1 italic">Dashboard, inventario, órdenes, pagos y tracking en un único panel_</p>
+            <h1 className="text-3xl font-black uppercase tracking-tighter text-[#224870]">Centro administrativo</h1>
+            <p className="mt-1 text-xs italic text-[#4f6983]">Dashboard, inventario, órdenes, pagos y tracking en un solo panel.</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
               onClick={() => setActivePanel('dashboard')}
-              className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border ${
-                activePanel === 'dashboard' ? 'bg-blue-600/20 border-blue-500/30 text-blue-300' : 'bg-gray-900/40 border-gray-800 text-gray-400'
+              className={`rounded-xl border-2 px-4 py-2 text-[10px] font-black uppercase tracking-widest ${
+                activePanel === 'dashboard' ? 'border-[#2f5d86] bg-[#dbe8f5] text-[#224870]' : 'border-[#d2b08f] bg-[#fffaf4] text-[#7f5c40]'
               }`}
             >
-              DASHBOARD
+              Dashboard
             </button>
             <button
               type="button"
               onClick={() => setActivePanel('inventory')}
-              className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border ${
-                activePanel === 'inventory' ? 'bg-blue-600/20 border-blue-500/30 text-blue-300' : 'bg-gray-900/40 border-gray-800 text-gray-400'
+              className={`rounded-xl border-2 px-4 py-2 text-[10px] font-black uppercase tracking-widest ${
+                activePanel === 'inventory' ? 'border-[#2f5d86] bg-[#dbe8f5] text-[#224870]' : 'border-[#d2b08f] bg-[#fffaf4] text-[#7f5c40]'
               }`}
             >
-              INVENTARIO
+              Inventario
             </button>
             <button
               type="button"
               onClick={() => setActivePanel('orders')}
-              className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border ${
-                activePanel === 'orders' ? 'bg-blue-600/20 border-blue-500/30 text-blue-300' : 'bg-gray-900/40 border-gray-800 text-gray-400'
+              className={`rounded-xl border-2 px-4 py-2 text-[10px] font-black uppercase tracking-widest ${
+                activePanel === 'orders' ? 'border-[#2f5d86] bg-[#dbe8f5] text-[#224870]' : 'border-[#d2b08f] bg-[#fffaf4] text-[#7f5c40]'
               }`}
             >
-              ÓRDENES
+              Órdenes
             </button>
             <button
               type="button"
               onClick={() => setActivePanel('payments')}
-              className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border ${
-                activePanel === 'payments' ? 'bg-blue-600/20 border-blue-500/30 text-blue-300' : 'bg-gray-900/40 border-gray-800 text-gray-400'
+              className={`rounded-xl border-2 px-4 py-2 text-[10px] font-black uppercase tracking-widest ${
+                activePanel === 'payments' ? 'border-[#2f5d86] bg-[#dbe8f5] text-[#224870]' : 'border-[#d2b08f] bg-[#fffaf4] text-[#7f5c40]'
               }`}
             >
-              PAGOS
+              Pagos
             </button>
             <button
               type="button"
               onClick={() => setActivePanel('shipping')}
-              className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border ${
-                activePanel === 'shipping' ? 'bg-blue-600/20 border-blue-500/30 text-blue-300' : 'bg-gray-900/40 border-gray-800 text-gray-400'
+              className={`rounded-xl border-2 px-4 py-2 text-[10px] font-black uppercase tracking-widest ${
+                activePanel === 'shipping' ? 'border-[#2f5d86] bg-[#dbe8f5] text-[#224870]' : 'border-[#d2b08f] bg-[#fffaf4] text-[#7f5c40]'
               }`}
             >
-              TRACKING
+              Tracking
             </button>
           </div>
         </div>
@@ -556,91 +584,91 @@ const GestionLibros = () => {
         {activePanel === 'dashboard' && (
           <div className="space-y-6">
             <div>
-              <h2 className="text-xl font-black uppercase tracking-tighter text-white flex items-center gap-2">
-                <LayoutDashboard className="w-5 h-5 text-blue-400" /> DASHBOARD_OPERATIVO
+              <h2 className="flex items-center gap-2 text-xl font-black uppercase tracking-tighter text-[#224870]">
+                <LayoutDashboard className="w-5 h-5 text-[#2f5d86]" /> Dashboard operativo
               </h2>
-              <p className="text-gray-500 text-xs mt-1">Resumen rápido del estado comercial y logístico del sistema_</p>
+              <p className="mt-1 text-xs font-semibold text-[#4f6983]">Resumen rápido del estado comercial y logístico del sistema.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-              <div className="rounded-2xl border border-gray-800 bg-gray-900/20 p-5 space-y-2">
-                <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest">CATÁLOGO</p>
-                <p className="text-3xl font-black text-white">{dashboardMetrics.totalBooks}</p>
-                <p className="text-[10px] text-blue-300 uppercase">Disponibles: {dashboardMetrics.availableBooks}</p>
+              <div className="rounded-2xl border border-black bg-[#eaf7ff] p-5 space-y-2 shadow-[0_12px_24px_rgba(93,149,190,0.14)]">
+                <p className="text-[10px] font-black uppercase tracking-widest text-[#5e7890]">CATÁLOGO</p>
+                <p className="text-3xl font-black text-[#355873]">{dashboardMetrics.totalBooks}</p>
+                <p className="text-[10px] font-bold uppercase text-[#4f7898]">Disponibles: {dashboardMetrics.availableBooks}</p>
               </div>
-              <div className="rounded-2xl border border-gray-800 bg-gray-900/20 p-5 space-y-2">
-                <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest">ÓRDENES</p>
-                <p className="text-3xl font-black text-white">{dashboardMetrics.totalOrders}</p>
-                <p className="text-[10px] text-yellow-300 uppercase">Pendientes: {dashboardMetrics.pendingOrders}</p>
-                <p className="text-[10px] text-emerald-300 uppercase">Pagadas: {dashboardMetrics.paidOrders}</p>
+              <div className="rounded-2xl border border-black bg-[#eaf7ff] p-5 space-y-2 shadow-[0_12px_24px_rgba(93,149,190,0.14)]">
+                <p className="text-[10px] font-black uppercase tracking-widest text-[#5e7890]">ÓRDENES</p>
+                <p className="text-3xl font-black text-[#355873]">{dashboardMetrics.totalOrders}</p>
+                <p className="text-[10px] font-bold uppercase text-[#9a8154]">Pendientes: {dashboardMetrics.pendingOrders}</p>
+                <p className="text-[10px] font-bold uppercase text-[#5e8d74]">Pagadas: {dashboardMetrics.paidOrders}</p>
               </div>
-              <div className="rounded-2xl border border-gray-800 bg-gray-900/20 p-5 space-y-2">
-                <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest">PAGOS</p>
-                <p className="text-3xl font-black text-white">{dashboardMetrics.totalPayments}</p>
-                <p className="text-[10px] text-emerald-300 uppercase">Confirmados: {dashboardMetrics.paidPayments}</p>
-                <p className="text-[10px] text-fuchsia-300 uppercase">Reembolsados: {dashboardMetrics.refundedPayments}</p>
+              <div className="rounded-2xl border border-black bg-[#eaf7ff] p-5 space-y-2 shadow-[0_12px_24px_rgba(93,149,190,0.14)]">
+                <p className="text-[10px] font-black uppercase tracking-widest text-[#5e7890]">PAGOS</p>
+                <p className="text-3xl font-black text-[#355873]">{dashboardMetrics.totalPayments}</p>
+                <p className="text-[10px] font-bold uppercase text-[#5e8d74]">Confirmados: {dashboardMetrics.paidPayments}</p>
+                <p className="text-[10px] font-bold uppercase text-[#80709c]">Reembolsados: {dashboardMetrics.refundedPayments}</p>
               </div>
-              <div className="rounded-2xl border border-gray-800 bg-gray-900/20 p-5 space-y-2">
-                <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest">INGRESOS</p>
-                <p className="text-3xl font-black text-emerald-400">${dashboardMetrics.totalRevenue.toLocaleString('es-CL')}</p>
-                <p className="text-[10px] text-blue-300 uppercase">Trackings activos: {dashboardMetrics.activeTrackings}</p>
+              <div className="rounded-2xl border border-black bg-[#eaf7ff] p-5 space-y-2 shadow-[0_12px_24px_rgba(93,149,190,0.14)]">
+                <p className="text-[10px] font-black uppercase tracking-widest text-[#5e7890]">INGRESOS</p>
+                <p className="text-3xl font-black text-[#5e8d74]">${dashboardMetrics.totalRevenue.toLocaleString('es-CL')}</p>
+                <p className="text-[10px] font-bold uppercase text-[#4f7898]">Trackings activos: {dashboardMetrics.activeTrackings}</p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-              <div className="rounded-2xl border border-gray-800 bg-gray-900/20 p-5 space-y-4">
-                <h3 className="text-[11px] font-black text-white uppercase tracking-[0.2em] flex items-center gap-2">
-                  <Activity className="w-4 h-4 text-blue-400" /> ÚLTIMAS_ÓRDENES
+              <div className="rounded-2xl border border-black bg-[#e3f4ff] p-5 space-y-4 shadow-[0_12px_24px_rgba(93,149,190,0.14)]">
+                <h3 className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.2em] text-[#355873]">
+                  <Activity className="w-4 h-4 text-[#5f89aa]" /> Últimas órdenes
                 </h3>
                 <div className="space-y-3">
                   {orders.slice(0, 5).map((order) => (
-                    <div key={order._id || order.id} className="rounded-xl border border-gray-800 bg-black/30 p-3 flex items-center justify-between gap-3">
+                    <div key={order._id || order.id} className="flex items-center justify-between gap-3 rounded-xl border border-[#aacde2] bg-[#f7fcff] p-3">
                       <div>
-                        <p className="text-[10px] font-black text-white uppercase">Orden #{order._id || order.id}</p>
-                        <p className="text-[9px] text-gray-500 uppercase">{new Date(order.created_at).toLocaleString()}</p>
+                        <p className="text-[10px] font-black uppercase text-[#355873]">Orden #{order._id || order.id}</p>
+                        <p className="text-[9px] font-semibold uppercase text-[#5e7890]">{new Date(order.created_at).toLocaleString()}</p>
                       </div>
                       <div className="text-right">
-                        <span className={`px-2 py-1 rounded-full border text-[8px] font-black uppercase ${getStatusClasses(order.status)}`}>{order.status}</span>
-                        <p className="text-[10px] text-emerald-400 font-black mt-2">${Number(order.total_amount || 0).toLocaleString('es-CL')}</p>
+                        <span className={`rounded-full border-2 px-2 py-1 text-[8px] font-black uppercase ${getDashboardStatusClasses(order.status)}`}>{formatOrderStatus(order.status)}</span>
+                        <p className="mt-2 text-[10px] font-black text-[#5e8d74]">${Number(order.total_amount || 0).toLocaleString('es-CL')}</p>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-gray-800 bg-gray-900/20 p-5 space-y-4">
-                <h3 className="text-[11px] font-black text-white uppercase tracking-[0.2em] flex items-center gap-2">
-                  <Truck className="w-4 h-4 text-blue-400" /> TRACKING_RECIENTE
+              <div className="rounded-2xl border border-black bg-[#e3f4ff] p-5 space-y-4 shadow-[0_12px_24px_rgba(93,149,190,0.14)]">
+                <h3 className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.2em] text-[#355873]">
+                  <Truck className="w-4 h-4 text-[#5f89aa]" /> Tracking reciente
                 </h3>
                 <div className="space-y-3">
                   {trackings.slice(0, 5).map((tracking) => (
-                    <div key={tracking.codigo_seguimiento} className="rounded-xl border border-gray-800 bg-black/30 p-3 flex items-center justify-between gap-3">
+                    <div key={tracking.codigo_seguimiento} className="flex items-center justify-between gap-3 rounded-xl border border-[#aacde2] bg-[#f7fcff] p-3">
                       <div>
-                        <p className="text-[10px] font-black text-white uppercase">{tracking.codigo_seguimiento}</p>
-                        <p className="text-[9px] text-gray-500 uppercase">Orden #{tracking.orden_id}</p>
+                        <p className="text-[10px] font-black uppercase text-[#355873]">{tracking.codigo_seguimiento}</p>
+                        <p className="text-[9px] font-semibold uppercase text-[#5e7890]">Orden #{tracking.orden_id}</p>
                       </div>
-                      <span className="px-2 py-1 rounded-full border border-blue-500/20 bg-blue-500/10 text-blue-300 text-[8px] font-black uppercase">
-                        {tracking.estado_envio}
+                      <span className={`rounded-full border-2 px-2 py-1 text-[8px] font-black uppercase ${getDashboardStatusClasses(tracking.estado_envio)}`}>
+                        {formatTrackingStatus(tracking.estado_envio)}
                       </span>
                     </div>
                   ))}
                   {trackings.length === 0 && (
-                    <p className="text-[10px] text-gray-500 uppercase tracking-widest">No hay despachos registrados_</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-[#5e7890]">No hay despachos registrados.</p>
                   )}
                 </div>
               </div>
             </div>
 
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-              <div className="rounded-2xl border border-gray-800 bg-gray-900/20 p-5 space-y-4">
-                <h3 className="text-[11px] font-black text-white uppercase tracking-[0.2em]">GRÁFICO_ÓRDENES</h3>
+              <div className="rounded-2xl border border-black bg-[#e3f4ff] p-5 space-y-4 shadow-[0_12px_24px_rgba(93,149,190,0.14)]">
+                <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-[#355873]">Gráfico de órdenes</h3>
                 {dashboardSeries.orders.map((entry) => (
                   <div key={entry.label} className="space-y-2">
                     <div className="flex items-center justify-between text-[10px]">
-                      <span className="text-gray-400 uppercase">{entry.label}</span>
-                      <span className="text-white font-black">{entry.value}</span>
+                      <span className="font-bold uppercase text-[#5e7890]">{entry.label}</span>
+                      <span className="font-black text-[#355873]">{entry.value}</span>
                     </div>
-                    <div className="h-2 rounded-full bg-black/40 overflow-hidden">
+                    <div className="h-2 overflow-hidden rounded-full bg-[#c1deef]">
                       <div
                         className={`h-full ${entry.color}`}
                         style={{ width: `${getPercent(entry.value, dashboardMetrics.totalOrders)}%` }}
@@ -650,15 +678,15 @@ const GestionLibros = () => {
                 ))}
               </div>
 
-              <div className="rounded-2xl border border-gray-800 bg-gray-900/20 p-5 space-y-4">
-                <h3 className="text-[11px] font-black text-white uppercase tracking-[0.2em]">GRÁFICO_PAGOS</h3>
+              <div className="rounded-2xl border border-black bg-[#e3f4ff] p-5 space-y-4 shadow-[0_12px_24px_rgba(93,149,190,0.14)]">
+                <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-[#355873]">Gráfico de pagos</h3>
                 {dashboardSeries.payments.map((entry) => (
                   <div key={entry.label} className="space-y-2">
                     <div className="flex items-center justify-between text-[10px]">
-                      <span className="text-gray-400 uppercase">{entry.label}</span>
-                      <span className="text-white font-black">{entry.value}</span>
+                      <span className="font-bold uppercase text-[#5e7890]">{entry.label}</span>
+                      <span className="font-black text-[#355873]">{entry.value}</span>
                     </div>
-                    <div className="h-2 rounded-full bg-black/40 overflow-hidden">
+                    <div className="h-2 overflow-hidden rounded-full bg-[#c1deef]">
                       <div
                         className={`h-full ${entry.color}`}
                         style={{ width: `${getPercent(entry.value, dashboardMetrics.totalPayments)}%` }}
@@ -668,15 +696,15 @@ const GestionLibros = () => {
                 ))}
               </div>
 
-              <div className="rounded-2xl border border-gray-800 bg-gray-900/20 p-5 space-y-4">
-                <h3 className="text-[11px] font-black text-white uppercase tracking-[0.2em]">GRÁFICO_ENVÍOS</h3>
+              <div className="rounded-2xl border border-black bg-[#e3f4ff] p-5 space-y-4 shadow-[0_12px_24px_rgba(93,149,190,0.14)]">
+                <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-[#355873]">Gráfico de envíos</h3>
                 {dashboardSeries.shipping.map((entry) => (
                   <div key={entry.label} className="space-y-2">
                     <div className="flex items-center justify-between text-[10px]">
-                      <span className="text-gray-400 uppercase">{entry.label}</span>
-                      <span className="text-white font-black">{entry.value}</span>
+                      <span className="font-bold uppercase text-[#5e7890]">{entry.label}</span>
+                      <span className="font-black text-[#355873]">{entry.value}</span>
                     </div>
-                    <div className="h-2 rounded-full bg-black/40 overflow-hidden">
+                    <div className="h-2 overflow-hidden rounded-full bg-[#c1deef]">
                       <div
                         className={`h-full ${entry.color}`}
                         style={{ width: `${getPercent(entry.value, dashboardMetrics.totalTrackings)}%` }}
@@ -693,16 +721,16 @@ const GestionLibros = () => {
           <div className="space-y-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div>
-                <h2 className="text-xl font-black uppercase tracking-tighter text-white flex items-center gap-2">
-                  <BookOpen className="w-5 h-5 text-blue-400" /> GESTIÓN_DE_INVENTARIO
+                <h2 className="flex items-center gap-2 text-xl font-black uppercase tracking-tighter text-[#224870]">
+                  <BookOpen className="w-5 h-5 text-[#2f5d86]" /> Gestión de inventario
                 </h2>
-                <p className="text-gray-500 text-xs mt-1">Administración central de ejemplares y portadas_</p>
+                <p className="mt-1 text-xs font-semibold text-[#4f6983]">Administración central de ejemplares y portadas.</p>
               </div>
               <button
                 onClick={openNewBookForm}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-[10px] font-black transition-all shadow-lg shadow-blue-600/20"
+                className="flex items-center gap-2 rounded-xl border border-black bg-[#d6ecfa] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#224870] shadow-[0_12px_24px_rgba(93,149,190,0.14)] transition-all hover:bg-[#c7e4f7]"
               >
-                <Plus className="w-4 h-4" /> REGISTRAR_NUEVO_ACTIVO
+                <Plus className="w-4 h-4" /> Registrar nuevo libro
               </button>
             </div>
 
@@ -710,52 +738,52 @@ const GestionLibros = () => {
               <input
                 type="text"
                 placeholder="Filtrar por título o autor..."
-                className="w-full bg-gray-900/50 border border-gray-800 rounded-xl pl-10 pr-4 py-2 text-xs focus:border-blue-500 outline-none transition-all"
+                className="w-full rounded-xl border border-black bg-[#f7fcff] pl-10 pr-4 py-2 text-xs font-semibold text-[#355873] outline-none transition-all placeholder:text-[#7d98ae] focus:border-[#7fb0d0] focus:bg-white"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#5f89aa]" />
             </div>
 
-            <div className="bg-gray-900/20 border border-gray-800 rounded-2xl overflow-hidden">
-              <table className="w-full text-left text-xs border-collapse">
+            <div className="overflow-x-auto rounded-2xl border border-black bg-[#e3f4ff] shadow-[0_12px_24px_rgba(93,149,190,0.14)]">
+              <table className="w-full min-w-[720px] border-collapse text-left text-xs">
                 <thead>
-                  <tr className="bg-gray-900/50 border-b border-gray-800 text-[10px] font-black text-gray-500 uppercase tracking-widest">
+                  <tr className="border-b border-black bg-[#d6ecfa] text-[10px] font-black uppercase tracking-widest text-[#355873]">
                     <th className="px-6 py-4">Portada</th>
                     <th className="px-6 py-4">Detalles del Libro</th>
                     <th className="px-6 py-4">Ubicación / Sede</th>
                     <th className="px-6 py-4">Precio</th>
-                    <th className="px-6 py-4 text-right">Acciones_</th>
+                    <th className="px-6 py-4 text-right">Acciones</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-800/50">
+                <tbody className="divide-y divide-[#aacde2]">
                   {loadingBooks ? (
                     <tr>
                       <td colSpan="5" className="px-6 py-10 text-center">
-                        <Loader2 className="w-6 h-6 animate-spin mx-auto text-blue-500" />
+                        <Loader2 className="mx-auto h-6 w-6 animate-spin text-[#5f89aa]" />
                       </td>
                     </tr>
                   ) : filteredBooks.map((book) => (
-                    <tr key={book._id || book.id} className="hover:bg-white/5 transition-all group">
+                    <tr key={book._id || book.id} className="group transition-all hover:bg-[#f7fcff]">
                       <td className="px-6 py-4">
-                        <div className="w-12 h-16 bg-black rounded border border-gray-800 overflow-hidden flex items-center justify-center">
+                        <div className="flex h-16 w-12 items-center justify-center overflow-hidden rounded border border-[#aacde2] bg-[#f7fcff]">
                           {book.image_url ? (
                             <img src={withApiOrigin(book.image_url)} className="w-full h-full object-cover opacity-70 group-hover:opacity-100 transition-opacity" alt={book.title} />
                           ) : (
-                            <BookOpen className="w-6 h-6 text-gray-700" />
+                            <BookOpen className="w-6 h-6 text-[#5f89aa]" />
                           )}
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <p className="font-bold text-gray-200 uppercase">{book.title}</p>
-                        <p className="text-[10px] text-gray-600 italic">Autor: {book.author}</p>
+                        <p className="font-black uppercase text-[#355873]">{book.title}</p>
+                        <p className="text-[10px] font-semibold italic text-[#5e7890]">Autor: {book.author}</p>
                       </td>
-                      <td className="px-6 py-4 text-gray-400 font-bold">{book.pickup_location}</td>
-                      <td className="px-6 py-4 font-black text-green-500">${(book.price || 0).toLocaleString('es-CL')}</td>
+                      <td className="px-6 py-4 font-black text-[#5e7890]">{book.pickup_location}</td>
+                      <td className="px-6 py-4 font-black text-[#4f7b67]">${(book.price || 0).toLocaleString('es-CL')}</td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end gap-2">
-                          <button onClick={() => handleEdit(book)} className="p-2 text-gray-500 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-all"><Edit2 className="w-4 h-4" /></button>
-                          <button onClick={() => handleDelete(book._id || book.id)} className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"><Trash2 className="w-4 h-4" /></button>
+                          <button onClick={() => handleEdit(book)} className="rounded-lg border border-black bg-[#d6ecfa] p-2 text-[#355873] transition-all hover:bg-[#c7e4f7]"><Edit2 className="w-4 h-4" /></button>
+                          <button onClick={() => handleDelete(book._id || book.id)} className="rounded-lg border border-[#dfb5b0] bg-[#fbefee] p-2 text-[#9b5550] transition-all hover:bg-[#f8e1df]"><Trash2 className="w-4 h-4" /></button>
                         </div>
                       </td>
                     </tr>
@@ -770,13 +798,13 @@ const GestionLibros = () => {
           <div className="space-y-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div>
-                <h2 className="text-xl font-black uppercase tracking-tighter text-white flex items-center gap-2">
-                  <Package className="w-5 h-5 text-blue-400" /> ÓRDENES_DEL_SISTEMA
+                <h2 className="flex items-center gap-2 text-xl font-black uppercase tracking-tighter text-[#224870]">
+                  <Package className="w-5 h-5 text-[#2f5d86]" /> Órdenes del sistema
                 </h2>
-                <p className="text-gray-500 text-xs mt-1">Control de estado, cancelación y reembolso de pedidos_</p>
+                <p className="mt-1 text-xs font-semibold text-[#4f6983]">Control de estado, cancelación y reembolso de pedidos.</p>
               </div>
-              <button onClick={fetchOrders} className="px-4 py-2 rounded-xl border border-gray-800 text-[10px] font-black uppercase tracking-widest text-gray-300 hover:bg-white/5 flex items-center gap-2">
-                <RefreshCw className="w-4 h-4" /> REFRESCAR
+              <button onClick={fetchOrders} className="flex items-center gap-2 rounded-xl border border-black bg-[#d6ecfa] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#224870] transition-all hover:bg-[#c7e4f7]">
+                <RefreshCw className="w-4 h-4" /> Refrescar
               </button>
             </div>
 
@@ -784,46 +812,46 @@ const GestionLibros = () => {
               <input
                 type="text"
                 placeholder="Buscar por orden, usuario, estado o libro..."
-                className="w-full bg-gray-900/50 border border-gray-800 rounded-xl pl-10 pr-4 py-2 text-xs focus:border-blue-500 outline-none transition-all"
+                className="w-full rounded-xl border border-black bg-[#f7fcff] pl-10 pr-4 py-2 text-xs font-semibold text-[#355873] outline-none transition-all placeholder:text-[#7d98ae] focus:border-[#7fb0d0] focus:bg-white"
                 value={orderSearchTerm}
                 onChange={(e) => setOrderSearchTerm(e.target.value)}
               />
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#5f89aa]" />
             </div>
 
             <div className="space-y-4">
               {loadingOrders ? (
-                <div className="py-12 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-blue-500" /></div>
+                <div className="py-12 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-[#5f89aa]" /></div>
               ) : filteredOrders.length === 0 ? (
-                <div className="border border-dashed border-gray-800 rounded-2xl py-14 text-center text-[11px] text-gray-500 uppercase tracking-widest">
-                  No hay órdenes para mostrar_
+                <div className="rounded-3xl border border-dashed border-[#aacde2] bg-[#e3f4ff] px-4 py-14 text-center text-[11px] font-bold uppercase tracking-widest text-[#5e7890]">
+                  No hay órdenes para mostrar.
                 </div>
               ) : (
                 filteredOrders.map((order) => (
-                  <div key={order._id || order.id} className="border border-gray-800 bg-gray-900/20 rounded-2xl p-5 space-y-4">
+                  <div key={order._id || order.id} className="space-y-4 rounded-2xl border border-black bg-[#e3f4ff] p-5 shadow-[0_12px_24px_rgba(93,149,190,0.14)]">
                     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                       <div className="space-y-1">
-                        <p className="text-white font-black uppercase tracking-tight">Orden #{order._id || order.id}</p>
-                        <p className="text-[10px] text-gray-500 uppercase">Usuario: {order.usuario_id}</p>
-                        <p className="text-[10px] text-gray-500 uppercase">Fecha: {new Date(order.created_at).toLocaleString()}</p>
+                        <p className="font-black uppercase tracking-tight text-[#355873]">Orden #{order._id || order.id}</p>
+                        <p className="text-[10px] font-bold uppercase text-[#5e7890]">Usuario: {order.usuario_id}</p>
+                        <p className="text-[10px] font-bold uppercase text-[#5e7890]">Fecha: {new Date(order.created_at).toLocaleString()}</p>
                       </div>
                       <div className="flex flex-wrap items-center gap-3">
-                        <span className={`px-3 py-1 rounded-full border text-[9px] font-black uppercase ${getStatusClasses(order.status)}`}>
-                          {order.status}
+                        <span className={`rounded-full border-2 px-3 py-1 text-[9px] font-black uppercase ${getDashboardStatusClasses(order.status)}`}>
+                          {formatOrderStatus(order.status)}
                         </span>
-                        <span className="text-emerald-400 font-black">${Number(order.total_amount || 0).toLocaleString('es-CL')}</span>
+                        <span className="font-black text-[#4f7b67]">${Number(order.total_amount || 0).toLocaleString('es-CL')}</span>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       {(order.items || []).map((item, index) => (
-                        <div key={`${order._id || order.id}-${index}`} className="rounded-xl border border-gray-800 bg-black/30 p-3 flex justify-between gap-3">
+                        <div key={`${order._id || order.id}-${index}`} className="flex justify-between gap-3 rounded-xl border border-[#aacde2] bg-[#f7fcff] p-3">
                           <div>
-                            <p className="text-[10px] font-bold text-gray-200 uppercase">{item.title}</p>
-                            <p className="text-[9px] text-gray-500 uppercase">Tipo: {item.tipo_item || 'fisico'}</p>
-                            <p className="text-[9px] text-gray-500 uppercase">Cantidad: {item.quantity}</p>
+                            <p className="text-[10px] font-black uppercase text-[#355873]">{item.title}</p>
+                            <p className="text-[9px] font-semibold uppercase text-[#5e7890]">Tipo: {formatItemType(item.tipo_item || 'fisico')}</p>
+                            <p className="text-[9px] font-semibold uppercase text-[#5e7890]">Cantidad: {item.quantity}</p>
                           </div>
-                          <span className="text-[10px] text-white font-black">${Number(item.price || 0).toLocaleString('es-CL')}</span>
+                          <span className="text-[10px] font-black text-[#355873]">${Number(item.price || 0).toLocaleString('es-CL')}</span>
                         </div>
                       ))}
                     </div>
@@ -833,33 +861,33 @@ const GestionLibros = () => {
                         type="button"
                         disabled={orderActionId !== null}
                         onClick={() => handleOrderStatus(order._id || order.id, 'pendiente')}
-                        className="px-3 py-2 rounded-xl border border-yellow-500/20 text-yellow-300 bg-yellow-500/10 text-[10px] font-black uppercase"
+                        className="rounded-xl border-2 border-[#d9c29b] bg-[#fbf3e5] px-3 py-2 text-[10px] font-black uppercase text-[#8a6b40]"
                       >
-                        {orderActionId === `status-${order._id || order.id}` ? 'PROCESANDO...' : 'MARCAR_PENDIENTE'}
+                        {orderActionId === `status-${order._id || order.id}` ? 'Procesando...' : 'Marcar pendiente'}
                       </button>
                       <button
                         type="button"
                         disabled={orderActionId !== null}
                         onClick={() => handleOrderStatus(order._id || order.id, 'pagado')}
-                        className="px-3 py-2 rounded-xl border border-emerald-500/20 text-emerald-300 bg-emerald-500/10 text-[10px] font-black uppercase"
+                        className="rounded-xl border-2 border-[#a9cdbb] bg-[#eff9f3] px-3 py-2 text-[10px] font-black uppercase text-[#4f7b67]"
                       >
-                        MARCAR_PAGADO
+                        Marcar pagado
                       </button>
                       <button
                         type="button"
                         disabled={orderActionId !== null}
                         onClick={() => handleCancelOrder(order._id || order.id)}
-                        className="px-3 py-2 rounded-xl border border-red-500/20 text-red-300 bg-red-500/10 text-[10px] font-black uppercase flex items-center gap-2"
+                        className="flex items-center gap-2 rounded-xl border-2 border-[#dfb5b0] bg-[#fbefee] px-3 py-2 text-[10px] font-black uppercase text-[#9b5550]"
                       >
-                        <Ban className="w-3 h-3" /> CANCELAR
+                        <Ban className="w-3 h-3" /> Cancelar
                       </button>
                       <button
                         type="button"
                         disabled={orderActionId !== null}
                         onClick={() => handleRefundOrder(order._id || order.id)}
-                        className="px-3 py-2 rounded-xl border border-fuchsia-500/20 text-fuchsia-300 bg-fuchsia-500/10 text-[10px] font-black uppercase flex items-center gap-2"
+                        className="flex items-center gap-2 rounded-xl border-2 border-[#d1c0e3] bg-[#f5effb] px-3 py-2 text-[10px] font-black uppercase text-[#75618f]"
                       >
-                        <RotateCcw className="w-3 h-3" /> REEMBOLSAR
+                        <RotateCcw className="w-3 h-3" /> Reembolsar
                       </button>
                     </div>
                   </div>
@@ -873,13 +901,13 @@ const GestionLibros = () => {
           <div className="space-y-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div>
-                <h2 className="text-xl font-black uppercase tracking-tighter text-white flex items-center gap-2">
-                  <CreditCard className="w-5 h-5 text-blue-400" /> PAGOS_DEL_SISTEMA
+                <h2 className="flex items-center gap-2 text-xl font-black uppercase tracking-tighter text-[#224870]">
+                  <CreditCard className="w-5 h-5 text-[#2f5d86]" /> Pagos del sistema
                 </h2>
-                <p className="text-gray-500 text-xs mt-1">Auditoría, confirmación, reembolso y limpieza de intents_</p>
+                <p className="mt-1 text-xs font-semibold text-[#4f6983]">Auditoría, confirmación, reembolso y limpieza de intents.</p>
               </div>
-              <button onClick={fetchPayments} className="px-4 py-2 rounded-xl border border-gray-800 text-[10px] font-black uppercase tracking-widest text-gray-300 hover:bg-white/5 flex items-center gap-2">
-                <RefreshCw className="w-4 h-4" /> REFRESCAR
+              <button onClick={fetchPayments} className="flex items-center gap-2 rounded-xl border border-black bg-[#d6ecfa] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#224870] transition-all hover:bg-[#c7e4f7]">
+                <RefreshCw className="w-4 h-4" /> Refrescar
               </button>
             </div>
 
@@ -887,35 +915,35 @@ const GestionLibros = () => {
               <input
                 type="text"
                 placeholder="Buscar por pago, orden, usuario, estado o método..."
-                className="w-full bg-gray-900/50 border border-gray-800 rounded-xl pl-10 pr-4 py-2 text-xs focus:border-blue-500 outline-none transition-all"
+                className="w-full rounded-xl border border-black bg-[#f7fcff] pl-10 pr-4 py-2 text-xs font-semibold text-[#355873] outline-none transition-all placeholder:text-[#7d98ae] focus:border-[#7fb0d0] focus:bg-white"
                 value={paymentSearchTerm}
                 onChange={(e) => setPaymentSearchTerm(e.target.value)}
               />
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#5f89aa]" />
             </div>
 
             <div className="space-y-4">
               {loadingPayments ? (
-                <div className="py-12 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-blue-500" /></div>
+                <div className="py-12 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-[#5f89aa]" /></div>
               ) : filteredPayments.length === 0 ? (
-                <div className="border border-dashed border-gray-800 rounded-2xl py-14 text-center text-[11px] text-gray-500 uppercase tracking-widest">
-                  No hay pagos para mostrar_
+                <div className="rounded-3xl border border-dashed border-[#aacde2] bg-[#e3f4ff] px-4 py-14 text-center text-[11px] font-bold uppercase tracking-widest text-[#5e7890]">
+                  No hay pagos para mostrar.
                 </div>
               ) : (
                 filteredPayments.map((payment) => (
-                  <div key={payment.id} className="border border-gray-800 bg-gray-900/20 rounded-2xl p-5 space-y-4">
+                  <div key={payment.id} className="space-y-4 rounded-2xl border border-black bg-[#e3f4ff] p-5 shadow-[0_12px_24px_rgba(93,149,190,0.14)]">
                     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                       <div className="space-y-1">
-                        <p className="text-white font-black uppercase tracking-tight">Pago #{payment.id}</p>
-                        <p className="text-[10px] text-gray-500 uppercase">Orden asociada: #{payment.orden_id}</p>
-                        <p className="text-[10px] text-gray-500 uppercase">Usuario: {payment.usuario_id}</p>
+                        <p className="font-black uppercase tracking-tight text-[#355873]">Pago #{payment.id}</p>
+                        <p className="text-[10px] font-bold uppercase text-[#5e7890]">Orden asociada: #{payment.orden_id}</p>
+                        <p className="text-[10px] font-bold uppercase text-[#5e7890]">Usuario: {payment.usuario_id}</p>
                       </div>
                       <div className="flex flex-wrap items-center gap-3">
-                        <span className={`px-3 py-1 rounded-full border text-[9px] font-black uppercase ${getStatusClasses(payment.estado)}`}>
-                          {payment.estado}
+                        <span className={`rounded-full border-2 px-3 py-1 text-[9px] font-black uppercase ${getDashboardStatusClasses(payment.estado)}`}>
+                          {formatPaymentStatus(payment.estado)}
                         </span>
-                        <span className="text-blue-300 font-black uppercase text-[10px]">{payment.metodo_pago}</span>
-                        <span className="text-emerald-400 font-black">${Number(payment.monto || 0).toLocaleString('es-CL')}</span>
+                        <span className="text-[10px] font-black uppercase text-[#5e7890]">{formatPaymentMethod(payment.metodo_pago)}</span>
+                        <span className="font-black text-[#4f7b67]">${Number(payment.monto || 0).toLocaleString('es-CL')}</span>
                       </div>
                     </div>
 
@@ -924,25 +952,25 @@ const GestionLibros = () => {
                         type="button"
                         disabled={paymentActionId !== null}
                         onClick={() => handleConfirmPayment(payment.id)}
-                        className="px-3 py-2 rounded-xl border border-emerald-500/20 text-emerald-300 bg-emerald-500/10 text-[10px] font-black uppercase"
+                        className="rounded-xl border-2 border-[#a9cdbb] bg-[#eff9f3] px-3 py-2 text-[10px] font-black uppercase text-[#4f7b67]"
                       >
-                        {paymentActionId === `confirm-${payment.id}` ? 'PROCESANDO...' : 'CONFIRMAR'}
+                        {paymentActionId === `confirm-${payment.id}` ? 'Procesando...' : 'Confirmar'}
                       </button>
                       <button
                         type="button"
                         disabled={paymentActionId !== null}
                         onClick={() => handleRefundPayment(payment.id)}
-                        className="px-3 py-2 rounded-xl border border-fuchsia-500/20 text-fuchsia-300 bg-fuchsia-500/10 text-[10px] font-black uppercase flex items-center gap-2"
+                        className="flex items-center gap-2 rounded-xl border-2 border-[#d1c0e3] bg-[#f5effb] px-3 py-2 text-[10px] font-black uppercase text-[#75618f]"
                       >
-                        <RotateCcw className="w-3 h-3" /> REEMBOLSAR
+                        <RotateCcw className="w-3 h-3" /> Reembolsar
                       </button>
                       <button
                         type="button"
                         disabled={paymentActionId !== null}
                         onClick={() => handleDeletePayment(payment.id)}
-                        className="px-3 py-2 rounded-xl border border-red-500/20 text-red-300 bg-red-500/10 text-[10px] font-black uppercase flex items-center gap-2"
+                        className="flex items-center gap-2 rounded-xl border-2 border-[#dfb5b0] bg-[#fbefee] px-3 py-2 text-[10px] font-black uppercase text-[#9b5550]"
                       >
-                        <Trash2 className="w-3 h-3" /> ELIMINAR
+                        <Trash2 className="w-3 h-3" /> Eliminar
                       </button>
                     </div>
                   </div>
@@ -956,27 +984,27 @@ const GestionLibros = () => {
           <div className="space-y-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div>
-                <h2 className="text-xl font-black uppercase tracking-tighter text-white flex items-center gap-2">
-                  <Truck className="w-5 h-5 text-blue-400" /> TRACKING_Y_ENVÍOS
+                <h2 className="flex items-center gap-2 text-xl font-black uppercase tracking-tighter text-[#224870]">
+                  <Truck className="w-5 h-5 text-[#2f5d86]" /> Tracking y envíos
                 </h2>
-                <p className="text-gray-500 text-xs mt-1">Creación, seguimiento y actualización de guías de despacho_</p>
+                <p className="mt-1 text-xs font-semibold text-[#4f6983]">Creación, seguimiento y actualización de guías de despacho.</p>
               </div>
-              <button onClick={fetchTrackings} className="px-4 py-2 rounded-xl border border-gray-800 text-[10px] font-black uppercase tracking-widest text-gray-300 hover:bg-white/5 flex items-center gap-2">
-                <RefreshCw className="w-4 h-4" /> REFRESCAR
+              <button onClick={fetchTrackings} className="flex items-center gap-2 rounded-xl border border-black bg-[#d6ecfa] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#224870] transition-all hover:bg-[#c7e4f7]">
+                <RefreshCw className="w-4 h-4" /> Refrescar
               </button>
             </div>
 
-            <div className="grid grid-cols-1 xl:grid-cols-[360px,1fr] gap-6">
-              <div className="rounded-2xl border border-gray-800 bg-gray-900/20 p-5 space-y-4">
-                <h3 className="text-[11px] font-black text-white uppercase tracking-[0.2em] flex items-center gap-2">
-                  <Plus className="w-4 h-4 text-blue-400" /> NUEVO_TRACKING
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-[320px,1fr]">
+              <div className="space-y-4 rounded-2xl border border-black bg-[#e3f4ff] p-5 shadow-[0_12px_24px_rgba(93,149,190,0.14)]">
+                <h3 className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.2em] text-[#355873]">
+                  <Plus className="w-4 h-4 text-[#5f89aa]" /> Nuevo tracking
                 </h3>
                 <form onSubmit={handleCreateTracking} className="space-y-4">
                   <div>
-                    <label className="text-[9px] font-black text-gray-600 uppercase mb-1 block">ORDEN</label>
+                    <label className="mb-1 block text-[9px] font-black uppercase text-[#5e7890]">Orden</label>
                     <select
                       required
-                      className="w-full bg-black border border-gray-800 rounded-xl px-4 py-2 text-xs focus:border-blue-500 outline-none"
+                      className="w-full rounded-xl border border-black bg-[#f7fcff] px-4 py-2 text-xs font-semibold text-[#355873] outline-none transition-all focus:border-[#7fb0d0] focus:bg-white"
                       value={trackingForm.orden_id}
                       onChange={(e) => setTrackingForm((current) => ({ ...current, orden_id: e.target.value }))}
                     >
@@ -990,9 +1018,9 @@ const GestionLibros = () => {
                   </div>
 
                   <div>
-                    <label className="text-[9px] font-black text-gray-600 uppercase mb-1 block">DIRECCIÓN_DESTINO</label>
+                    <label className="mb-1 block text-[9px] font-black uppercase text-[#5e7890]">Dirección destino</label>
                     <input
-                      className="w-full bg-black border border-gray-800 rounded-xl px-4 py-2 text-xs focus:border-blue-500 outline-none"
+                      className="w-full rounded-xl border border-black bg-[#f7fcff] px-4 py-2 text-xs font-semibold text-[#355873] outline-none transition-all placeholder:text-[#7d98ae] focus:border-[#7fb0d0] focus:bg-white"
                       value={trackingForm.direccion_destino}
                       onChange={(e) => setTrackingForm((current) => ({ ...current, direccion_destino: e.target.value }))}
                       placeholder="Ej: Av. Central 123, Maipú"
@@ -1000,9 +1028,9 @@ const GestionLibros = () => {
                   </div>
 
                   <div>
-                    <label className="text-[9px] font-black text-gray-600 uppercase mb-1 block">SUCURSAL_RETIRO</label>
+                    <label className="mb-1 block text-[9px] font-black uppercase text-[#5e7890]">Sucursal retiro</label>
                     <select
-                      className="w-full bg-black border border-gray-800 rounded-xl px-4 py-2 text-xs focus:border-blue-500 outline-none"
+                      className="w-full rounded-xl border border-black bg-[#f7fcff] px-4 py-2 text-xs font-semibold text-[#355873] outline-none transition-all focus:border-[#7fb0d0] focus:bg-white"
                       value={trackingForm.sucursal_retiro_id}
                       onChange={(e) => setTrackingForm((current) => ({ ...current, sucursal_retiro_id: e.target.value }))}
                     >
@@ -1018,10 +1046,10 @@ const GestionLibros = () => {
                   <button
                     type="submit"
                     disabled={trackingActionId !== null}
-                    className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-black bg-[#d6ecfa] px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[#224870] transition-all hover:bg-[#c7e4f7] disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {trackingActionId === 'create' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Truck className="w-4 h-4" />}
-                    CREAR_TRACKING
+                    Crear tracking
                   </button>
                 </form>
               </div>
@@ -1031,34 +1059,34 @@ const GestionLibros = () => {
                   <input
                     type="text"
                     placeholder="Buscar por código, orden, estado o dirección..."
-                    className="w-full bg-gray-900/50 border border-gray-800 rounded-xl pl-10 pr-4 py-2 text-xs focus:border-blue-500 outline-none transition-all"
+                    className="w-full rounded-xl border border-black bg-[#f7fcff] pl-10 pr-4 py-2 text-xs font-semibold text-[#355873] outline-none transition-all placeholder:text-[#7d98ae] focus:border-[#7fb0d0] focus:bg-white"
                     value={trackingSearchTerm}
                     onChange={(e) => setTrackingSearchTerm(e.target.value)}
                   />
-                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" />
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#5f89aa]" />
                 </div>
 
                 <div className="space-y-4">
                   {loadingTrackings ? (
-                    <div className="py-12 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-blue-500" /></div>
+                    <div className="py-12 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-[#5f89aa]" /></div>
                   ) : filteredTrackings.length === 0 ? (
-                    <div className="border border-dashed border-gray-800 rounded-2xl py-14 text-center text-[11px] text-gray-500 uppercase tracking-widest">
-                      No hay trackings para mostrar_
+                    <div className="rounded-3xl border border-dashed border-[#aacde2] bg-[#e3f4ff] px-4 py-14 text-center text-[11px] font-bold uppercase tracking-widest text-[#5e7890]">
+                      No hay trackings para mostrar.
                     </div>
                   ) : (
                     filteredTrackings.map((tracking) => (
-                      <div key={tracking.codigo_seguimiento} className="border border-gray-800 bg-gray-900/20 rounded-2xl p-5 space-y-4">
+                      <div key={tracking.codigo_seguimiento} className="space-y-4 rounded-2xl border border-black bg-[#e3f4ff] p-5 shadow-[0_12px_24px_rgba(93,149,190,0.14)]">
                         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                           <div className="space-y-1">
-                            <p className="text-white font-black uppercase tracking-tight">{tracking.codigo_seguimiento}</p>
-                            <p className="text-[10px] text-gray-500 uppercase">Orden #{tracking.orden_id}</p>
-                            <p className="text-[10px] text-gray-500 uppercase flex items-center gap-2">
+                            <p className="font-black uppercase tracking-tight text-[#355873]">{tracking.codigo_seguimiento}</p>
+                            <p className="text-[10px] font-bold uppercase text-[#5e7890]">Orden #{tracking.orden_id}</p>
+                            <p className="flex items-center gap-2 text-[10px] font-bold uppercase text-[#5e7890]">
                               <MapPin className="w-3 h-3" />
                               {tracking.direccion_destino || 'Sin dirección'}
                             </p>
                           </div>
-                          <span className="px-3 py-1 rounded-full border border-blue-500/20 bg-blue-500/10 text-blue-300 text-[9px] font-black uppercase">
-                            {tracking.estado_envio}
+                          <span className={`rounded-full border-2 px-3 py-1 text-[9px] font-black uppercase ${getDashboardStatusClasses(tracking.estado_envio)}`}>
+                            {formatTrackingStatus(tracking.estado_envio)}
                           </span>
                         </div>
 
@@ -1067,33 +1095,33 @@ const GestionLibros = () => {
                             type="button"
                             disabled={trackingActionId !== null}
                             onClick={() => handleTrackingStatus(tracking.codigo_seguimiento, 'en_preparacion')}
-                            className="px-3 py-2 rounded-xl border border-yellow-500/20 text-yellow-300 bg-yellow-500/10 text-[10px] font-black uppercase"
+                            className="rounded-xl border-2 border-[#d9c29b] bg-[#fbf3e5] px-3 py-2 text-[10px] font-black uppercase text-[#8a6b40]"
                           >
-                            PREPARACIÓN
+                            En preparación
                           </button>
                           <button
                             type="button"
                             disabled={trackingActionId !== null}
                             onClick={() => handleTrackingStatus(tracking.codigo_seguimiento, 'en_ruta')}
-                            className="px-3 py-2 rounded-xl border border-blue-500/20 text-blue-300 bg-blue-500/10 text-[10px] font-black uppercase"
+                            className="rounded-xl border-2 border-[#b9d8ea] bg-[#f1f9fe] px-3 py-2 text-[10px] font-black uppercase text-[#4f7898]"
                           >
-                            EN_RUTA
+                            En ruta
                           </button>
                           <button
                             type="button"
                             disabled={trackingActionId !== null}
                             onClick={() => handleTrackingStatus(tracking.codigo_seguimiento, 'entregado')}
-                            className="px-3 py-2 rounded-xl border border-emerald-500/20 text-emerald-300 bg-emerald-500/10 text-[10px] font-black uppercase"
+                            className="rounded-xl border-2 border-[#a9cdbb] bg-[#eff9f3] px-3 py-2 text-[10px] font-black uppercase text-[#4f7b67]"
                           >
-                            ENTREGADO
+                            Entregado
                           </button>
                           <button
                             type="button"
                             disabled={trackingActionId !== null}
                             onClick={() => handleDeleteTracking(tracking.codigo_seguimiento)}
-                            className="px-3 py-2 rounded-xl border border-red-500/20 text-red-300 bg-red-500/10 text-[10px] font-black uppercase flex items-center gap-2"
+                            className="flex items-center gap-2 rounded-xl border-2 border-[#dfb5b0] bg-[#fbefee] px-3 py-2 text-[10px] font-black uppercase text-[#9b5550]"
                           >
-                            <Trash2 className="w-3 h-3" /> ELIMINAR
+                            <Trash2 className="w-3 h-3" /> Eliminar
                           </button>
                         </div>
                       </div>
@@ -1107,30 +1135,30 @@ const GestionLibros = () => {
 
         {showForm && (
           <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-gray-900 border border-gray-800 rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl">
-              <div className="p-6 border-b border-gray-800 flex justify-between items-center bg-gray-900/50">
-                <h2 className="text-xl font-black uppercase tracking-tighter">{editingBook ? 'EDITAR_ACTIVO' : 'NUEVO_ACTIVO'}</h2>
-                <button onClick={closeForm} className="text-gray-500 hover:text-white"><X className="w-6 h-6" /></button>
+            <div className="w-full max-w-2xl overflow-hidden rounded-3xl border-2 border-black bg-[#eaf7ff] shadow-[0_18px_36px_rgba(93,149,190,0.18)]">
+              <div className="flex items-center justify-between border-b-2 border-black bg-[#d6ecfa] p-6">
+                <h2 className="text-xl font-black uppercase tracking-tighter text-[#224870]">{editingBook ? 'Editar libro' : 'Nuevo libro'}</h2>
+                <button onClick={closeForm} className="text-[#355873] hover:text-[#224870]"><X className="w-6 h-6" /></button>
               </div>
               <form onSubmit={handleSubmit} className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <div>
-                    <label className="text-[9px] font-black text-gray-600 uppercase mb-1 block">TÍTULO</label>
-                    <input required className="w-full bg-black border border-gray-800 rounded-xl px-4 py-2 text-xs focus:border-blue-500 outline-none" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} />
+                    <label className="mb-1 block text-[9px] font-black uppercase text-[#5e7890]">Título</label>
+                    <input required className="w-full rounded-xl border border-black bg-[#f7fcff] px-4 py-2 text-xs font-semibold text-[#355873] outline-none transition-all placeholder:text-[#7d98ae] focus:border-[#7fb0d0] focus:bg-white" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} />
                   </div>
                   <div>
-                    <label className="text-[9px] font-black text-gray-600 uppercase mb-1 block">AUTOR</label>
-                    <input required className="w-full bg-black border border-gray-800 rounded-xl px-4 py-2 text-xs focus:border-blue-500 outline-none" value={formData.author} onChange={(e) => setFormData({ ...formData, author: e.target.value })} />
+                    <label className="mb-1 block text-[9px] font-black uppercase text-[#5e7890]">Autor</label>
+                    <input required className="w-full rounded-xl border border-black bg-[#f7fcff] px-4 py-2 text-xs font-semibold text-[#355873] outline-none transition-all placeholder:text-[#7d98ae] focus:border-[#7fb0d0] focus:bg-white" value={formData.author} onChange={(e) => setFormData({ ...formData, author: e.target.value })} />
                   </div>
                   <div>
-                    <label className="text-[9px] font-black text-gray-600 uppercase mb-1 block">PRECIO ($)</label>
-                    <input type="number" required className="w-full bg-black border border-gray-800 rounded-xl px-4 py-2 text-xs focus:border-blue-500 outline-none" value={formData.price} onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })} />
+                    <label className="mb-1 block text-[9px] font-black uppercase text-[#5e7890]">Precio ($)</label>
+                    <input type="number" required className="w-full rounded-xl border border-black bg-[#f7fcff] px-4 py-2 text-xs font-semibold text-[#355873] outline-none transition-all placeholder:text-[#7d98ae] focus:border-[#7fb0d0] focus:bg-white" value={formData.price} onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })} />
                   </div>
                 </div>
                 <div className="space-y-4">
                   <div>
-                    <label className="text-[9px] font-black text-gray-600 uppercase mb-1 block">SEDE_RETIRO</label>
-                    <select className="w-full bg-black border border-gray-800 rounded-xl px-4 py-2 text-xs focus:border-blue-500 outline-none" value={formData.pickup_location} onChange={(e) => setFormData({ ...formData, pickup_location: e.target.value })}>
+                    <label className="mb-1 block text-[9px] font-black uppercase text-[#5e7890]">Sede retiro</label>
+                    <select className="w-full rounded-xl border border-black bg-[#f7fcff] px-4 py-2 text-xs font-semibold text-[#355873] outline-none transition-all focus:border-[#7fb0d0] focus:bg-white" value={formData.pickup_location} onChange={(e) => setFormData({ ...formData, pickup_location: e.target.value })}>
                       <option value="Plaza de Maipú">Plaza de Maipú</option>
                       <option value="Ciudad Satélite">Ciudad Satélite</option>
                       <option value="El Abrazo">El Abrazo</option>
@@ -1138,8 +1166,8 @@ const GestionLibros = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="text-[9px] font-black text-gray-600 uppercase mb-1 block">ÁREA_TEMÁTICA</label>
-                    <select className="w-full bg-black border border-gray-800 rounded-xl px-4 py-2 text-xs focus:border-blue-500 outline-none" value={formData.categories[0]} onChange={(e) => setFormData({ ...formData, categories: [e.target.value] })}>
+                    <label className="mb-1 block text-[9px] font-black uppercase text-[#5e7890]">Área temática</label>
+                    <select className="w-full rounded-xl border border-black bg-[#f7fcff] px-4 py-2 text-xs font-semibold text-[#355873] outline-none transition-all focus:border-[#7fb0d0] focus:bg-white" value={formData.categories[0]} onChange={(e) => setFormData({ ...formData, categories: [e.target.value] })}>
                       <option value="General">General</option>
                       <option value="Historia">Historia</option>
                       <option value="Educación">Educación</option>
@@ -1149,12 +1177,12 @@ const GestionLibros = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="text-[9px] font-black text-gray-600 uppercase mb-1 block">DESCRIPCIÓN</label>
-                    <textarea rows="3" className="w-full bg-black border border-gray-800 rounded-xl px-4 py-2 text-xs focus:border-blue-500 outline-none resize-none" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
+                    <label className="mb-1 block text-[9px] font-black uppercase text-[#5e7890]">Descripción</label>
+                    <textarea rows="3" className="w-full rounded-2xl border border-black bg-[#f7fcff] px-4 py-2 text-xs font-semibold text-[#355873] outline-none transition-all placeholder:text-[#7d98ae] focus:border-[#7fb0d0] focus:bg-white resize-none" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
                   </div>
                   <div>
-                    <label className="text-[9px] font-black text-gray-600 uppercase mb-1 block">PORTADA (OPCIONAL)</label>
-                    <div className="mb-3 h-40 bg-black border border-gray-800 rounded-2xl overflow-hidden flex items-center justify-center">
+                    <label className="mb-1 block text-[9px] font-black uppercase text-[#5e7890]">Portada (opcional)</label>
+                    <div className="mb-3 flex h-40 items-center justify-center overflow-hidden rounded-2xl border-2 border-[#aacde2] bg-[#f7fcff]">
                       {imageFile || editingBook?.image_url ? (
                         <img
                           src={imageFile ? URL.createObjectURL(imageFile) : withApiOrigin(editingBook.image_url)}
@@ -1162,26 +1190,26 @@ const GestionLibros = () => {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <BookOpen className="w-10 h-10 text-gray-700" />
+                        <BookOpen className="w-10 h-10 text-[#5f89aa]" />
                       )}
                     </div>
                     <div className="relative">
                       <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => setImageFile(e.target.files[0])} />
-                      <div className="bg-black border border-gray-800 rounded-xl px-4 py-2 text-[10px] flex items-center gap-2 text-gray-500 italic">
+                      <div className="flex items-center gap-2 rounded-xl border-2 border-[#aacde2] bg-[#f7fcff] px-4 py-2 text-[10px] font-semibold italic text-[#5e7890]">
                         <Upload className="w-3 h-3" /> {imageFile ? imageFile.name : 'Click para subir imagen...'}
                       </div>
                     </div>
                   </div>
                 </div>
                 <div className="md:col-span-2 pt-4 flex justify-end gap-3">
-                  <button type="button" onClick={closeForm} className="px-6 py-2 border border-gray-800 rounded-xl text-[10px] font-bold uppercase hover:bg-white/5 transition-all text-gray-500">CANCELAR</button>
+                  <button type="button" onClick={closeForm} className="rounded-xl border-2 border-[#aacde2] bg-[#f7fcff] px-6 py-2 text-[10px] font-black uppercase tracking-widest text-[#355873] transition-all hover:bg-white">Cancelar</button>
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="px-8 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded-xl text-[10px] font-black transition-all flex items-center gap-2"
+                    className="flex items-center gap-2 rounded-xl border-2 border-black bg-[#d6ecfa] px-8 py-2 text-[10px] font-black uppercase tracking-widest text-[#224870] transition-all hover:bg-[#c7e4f7] disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                    {editingBook ? 'GUARDAR_CAMBIOS' : 'REGISTRAR_ACTIVO'}
+                    {editingBook ? 'Guardar cambios' : 'Registrar libro'}
                   </button>
                 </div>
               </form>

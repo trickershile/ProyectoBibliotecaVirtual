@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Bot, Loader2, Send, Sparkles, User, Wifi, WifiOff } from 'lucide-react';
 import { buildIaWebSocketUrl } from '../api/ia';
+import { statusStyles, theme } from '../lib/theme';
 
 const createSessionId = (userId) => {
   const random = Math.random().toString(36).slice(2, 10);
@@ -121,46 +122,46 @@ const AsistenteIA = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white p-6 font-mono">
-      <div className="max-w-5xl mx-auto space-y-6">
-        <div className="border-b border-gray-800 pb-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+    <div className={theme.pageShell}>
+      <div className={theme.compactContainer}>
+        <div className={`${theme.pageHeader} flex flex-col justify-between gap-4 lg:flex-row lg:items-center`}>
           <div>
-            <h1 className="text-4xl font-black tracking-tighter uppercase text-blue-500 flex items-center gap-3">
-              <Sparkles className="w-8 h-8" /> ASISTENTE_IA
+            <h1 className={theme.pageTitleRow}>
+              <Sparkles className="w-8 h-8" /> Asistente IA
             </h1>
-            <p className="text-gray-500 text-sm mt-2">Canal en tiempo real por WebSocket con el recomendador literario_</p>
+            <p className={theme.pageSubtitle}>Canal en tiempo real con el recomendador literario.</p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <span className={`px-3 py-2 rounded-xl border text-[10px] font-black uppercase tracking-widest flex items-center gap-2 ${
-              isConnected ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-300' : 'border-red-500/20 bg-red-500/10 text-red-300'
+            <span className={`flex items-center gap-2 rounded-xl border-2 px-3 py-2 text-[10px] font-black uppercase tracking-widest ${
+              isConnected ? statusStyles.success : statusStyles.danger
             }`}>
               {isConnected ? <Wifi className="w-4 h-4" /> : <WifiOff className="w-4 h-4" />}
-              {isConnecting ? 'CONECTANDO' : isConnected ? 'CONECTADO' : 'DESCONECTADO'}
+              {isConnecting ? 'Conectando' : isConnected ? 'Conectado' : 'Desconectado'}
             </span>
             <button
               type="button"
               onClick={handleNewSession}
-              className="px-4 py-2 rounded-xl border border-gray-800 text-[10px] font-black uppercase tracking-widest text-gray-300 hover:bg-white/5"
+              className={theme.outlineButton}
             >
-              NUEVA_SESIÓN
+              Nueva sesión
             </button>
           </div>
         </div>
 
-        <div className="rounded-3xl border border-gray-800 bg-gray-900/20 overflow-hidden">
-          <div className="px-5 py-4 border-b border-gray-800 flex items-center justify-between gap-3">
+        <div className={`${theme.sectionCard} overflow-hidden p-0`}>
+          <div className="flex items-center justify-between gap-3 border-b-2 border-[#d2b08f] px-5 py-4">
             <div>
-              <p className="text-[10px] font-black text-blue-300 uppercase tracking-widest">SESIÓN_ACTIVA</p>
-              <p className="text-[10px] text-gray-500 uppercase break-all">{sessionId || 'generando...'}</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-[#7f5c40]">Sesión activa</p>
+              <p className="break-all text-[10px] uppercase text-[#9d7553]">{sessionId || 'generando...'}</p>
             </div>
             {isSending && (
-              <div className="text-[10px] text-yellow-300 uppercase tracking-widest flex items-center gap-2">
+              <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-[#8a633f]">
                 <Loader2 className="w-4 h-4 animate-spin" /> Procesando respuesta
               </div>
             )}
           </div>
 
-          <div className="h-[520px] overflow-y-auto p-5 space-y-4">
+          <div className="h-[min(520px,calc(100vh-20rem))] min-h-[320px] overflow-y-auto p-5 space-y-4 sm:h-[min(520px,calc(100vh-18rem))]">
             {messages.map((message) => (
               <div
                 key={message.id}
@@ -169,13 +170,13 @@ const AsistenteIA = () => {
                 <div
                   className={`max-w-3xl rounded-2xl px-4 py-3 border ${
                     message.role === 'user'
-                      ? 'bg-blue-600/10 border-blue-500/20 text-blue-50'
-                      : 'bg-gray-950/80 border-gray-800 text-gray-200'
+                      ? 'border-[#9faf92] bg-[#eef4e8] text-[#4f5f49]'
+                      : 'border-[#d2b08f] bg-[#f8ede2] text-[#5a3f2b]'
                   }`}
                 >
                   <div className="flex items-center gap-2 mb-2 text-[10px] font-black uppercase tracking-widest">
-                    {message.role === 'user' ? <User className="w-4 h-4 text-blue-300" /> : <Bot className="w-4 h-4 text-purple-300" />}
-                    {message.role === 'user' ? 'TÚ' : 'ASISTENTE'}
+                    {message.role === 'user' ? <User className="w-4 h-4 text-[#566b4a]" /> : <Bot className="w-4 h-4 text-[#8f6443]" />}
+                    {message.role === 'user' ? 'Tú' : 'Asistente'}
                   </div>
                   <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
                 </div>
@@ -184,23 +185,23 @@ const AsistenteIA = () => {
             <div ref={messagesEndRef} />
           </div>
 
-          <form onSubmit={handleSendMessage} className="p-5 border-t border-gray-800 bg-black/20">
+          <form onSubmit={handleSendMessage} className="border-t-2 border-[#d2b08f] bg-[#f3e4d4] p-5">
             <div className="flex flex-col md:flex-row gap-3">
               <textarea
                 rows="3"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Pregunta por recomendaciones, autores o disponibilidad..."
-                className="flex-1 bg-black/40 border border-gray-800 rounded-2xl px-4 py-3 text-sm text-gray-200 outline-none focus:border-blue-500 resize-none"
+                className={`flex-1 ${theme.textarea}`}
                 disabled={!isConnected}
               />
               <button
                 type="submit"
                 disabled={!isConnected || isSending || !input.trim()}
-                className="px-6 py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 min-w-[160px]"
+                className={`flex w-full items-center justify-center gap-2 rounded-2xl px-6 py-3 text-[10px] font-black uppercase tracking-widest text-white md:min-w-[160px] md:w-auto ${theme.primaryButton} disabled:cursor-not-allowed disabled:opacity-60`}
               >
                 {isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                ENVIAR
+                Enviar
               </button>
             </div>
           </form>

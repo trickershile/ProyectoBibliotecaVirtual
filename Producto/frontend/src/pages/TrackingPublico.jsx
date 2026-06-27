@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Loader2, MapPin, Search, Truck } from 'lucide-react';
 import { shippingApi } from '../api/shipping';
+import { formatTrackingStatus } from '../lib/labels';
+import { statusStyles, theme } from '../lib/theme';
 
 const TrackingPublico = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -53,65 +55,65 @@ const TrackingPublico = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white p-6 font-mono">
-      <div className="max-w-4xl mx-auto space-y-8">
-        <div className="border-b border-gray-800 pb-6">
-          <h1 className="text-4xl font-black tracking-tighter uppercase text-blue-500 flex items-center gap-3">
-            <Truck className="w-8 h-8" /> SEGUIMIENTO_DE_ENVÍO
+    <div className={theme.pageShell}>
+      <div className={theme.narrowContainer}>
+        <div className={theme.pageHeader}>
+          <h1 className={theme.pageTitleRow}>
+            <Truck className="w-8 h-8" /> Seguimiento de envío
           </h1>
-          <p className="text-gray-500 mt-2">Consulta el estado de tu despacho usando el código de seguimiento_</p>
+          <p className={theme.pageSubtitle}>Consulta el estado de tu despacho usando el código de seguimiento.</p>
         </div>
 
-        <form onSubmit={handleSearch} className="rounded-3xl border border-gray-800 bg-gray-900/20 p-6 space-y-4">
-          <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500">CÓDIGO_DE_TRACKING</label>
+        <form onSubmit={handleSearch} className={`${theme.sectionCard} space-y-4`}>
+          <label className={theme.label}>Código de tracking</label>
           <div className="flex flex-col md:flex-row gap-3">
             <div className="relative flex-1">
               <input
                 value={code}
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
                 placeholder="Ej: LV-1A2B3C4D"
-                className="w-full bg-black/40 border border-gray-800 rounded-2xl pl-11 pr-4 py-3 text-sm text-gray-100 outline-none focus:border-blue-500"
+                className={`${theme.input} pl-11`}
               />
-              <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-gray-600" />
+              <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9d7553]" />
             </div>
             <button
               type="submit"
               disabled={loading || !code.trim()}
-              className="px-6 py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2"
+              className={`${theme.primaryButton} flex items-center justify-center gap-2 px-6 py-3 disabled:cursor-not-allowed disabled:opacity-60`}
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Truck className="w-4 h-4" />}
-              CONSULTAR
+              Consultar
             </button>
           </div>
         </form>
 
         {error && (
-          <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-5 text-[11px] text-red-300 uppercase tracking-widest">
+          <div className={`rounded-2xl p-5 text-[11px] uppercase tracking-widest ${theme.sectionCardCompact} ${statusStyles.danger}`}>
             {error}
           </div>
         )}
 
         {tracking && (
-          <div className="rounded-3xl border border-gray-800 bg-gray-900/20 overflow-hidden">
-            <div className="p-5 border-b border-gray-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className={`${theme.sectionCard} overflow-hidden p-0`}>
+            <div className="flex flex-col justify-between gap-4 border-b-2 border-[#d2b08f] p-5 md:flex-row md:items-center">
               <div>
-                <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">CÓDIGO</p>
-                <p className="text-xl font-black text-white uppercase">{tracking.codigo_seguimiento}</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-[#7f5c40]">Código</p>
+                <p className="text-xl font-black uppercase text-[#5a3f2b]">{tracking.codigo_seguimiento}</p>
               </div>
-              <span className="px-3 py-1 rounded-full border border-blue-500/20 bg-blue-500/10 text-blue-300 text-[10px] font-black uppercase tracking-widest">
-                {tracking.estado_envio}
+              <span className={`${theme.statusBadge} ${statusStyles.info}`}>
+                {formatTrackingStatus(tracking.estado_envio)}
               </span>
             </div>
 
             <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="space-y-2">
-                <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">ORDEN_ASOCIADA</p>
-                <p className="text-sm text-white font-bold">#{tracking.orden_id}</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-[#7f5c40]">Orden asociada</p>
+                <p className="text-sm font-bold text-[#5a3f2b]">#{tracking.orden_id}</p>
               </div>
               <div className="space-y-2">
-                <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">DESTINO</p>
-                <p className="text-sm text-gray-300 flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-blue-400" />
+                <p className="text-[10px] font-black uppercase tracking-widest text-[#7f5c40]">Destino</p>
+                <p className="flex items-center gap-2 text-sm text-[#6f523c]">
+                  <MapPin className="h-4 w-4 text-[#8f6443]" />
                   {tracking.direccion_destino || 'Retiro en biblioteca'}
                 </p>
               </div>
@@ -120,8 +122,8 @@ const TrackingPublico = () => {
         )}
 
         <div className="text-center">
-          <Link to="/catalogo" className="text-blue-400 hover:text-blue-300 text-[10px] font-black uppercase tracking-widest">
-            VOLVER_AL_CATÁLOGO
+          <Link to="/catalogo" className="text-[10px] font-black uppercase tracking-widest text-[#7f5c40] transition-colors hover:text-[#5a3f2b]">
+            Volver al catálogo
           </Link>
         </div>
       </div>

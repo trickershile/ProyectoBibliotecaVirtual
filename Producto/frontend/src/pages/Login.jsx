@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Button from '../components/Button';
 import { getProfile, setAuthStorage, signIn } from '../lib/supabase';
+import { theme } from '../lib/theme';
 
 const Login = () => {
   const location = useLocation();
@@ -31,6 +32,9 @@ const Login = () => {
       
       const profile = await getProfile(data.user.id);
       setAuthStorage({ user: data.user, session: data.session, profile });
+      window.dispatchEvent(new CustomEvent('show-toast', {
+        detail: { message: 'Has iniciado sesión.' }
+      }));
       
       const redirectTo = location.state?.from?.pathname || '/perfil';
       navigate(redirectTo, { replace: true });
@@ -42,60 +46,60 @@ const Login = () => {
   };
 
   return (
-    <div className="flex items-center justify-center p-4 py-20">
-      <div className="w-full max-w-md bg-gray-900/50 border border-gray-800 rounded-2xl shadow-2xl p-8 space-y-8 relative overflow-hidden group">
-        <div className="absolute -top-24 -right-24 w-48 h-48 bg-blue-600/10 rounded-full blur-3xl group-hover:bg-blue-600/20 transition-all duration-500"></div>
+    <div className={`${theme.pageShell} flex items-center justify-center`}>
+      <div className={`relative w-full max-w-md space-y-8 overflow-hidden ${theme.sectionCard} p-6 sm:p-8`}>
+        <div className="absolute -top-24 -right-24 h-48 w-48 rounded-full bg-[#d8bb9e]/50 blur-3xl transition-all duration-500"></div>
 
         <div className="text-center relative z-10">
-          <h1 className="text-3xl font-bold text-white font-mono tracking-tighter uppercase">
-            {'>'} INICIO_SESIÓN
+          <h1 className="text-3xl font-bold font-mono tracking-tighter uppercase text-[#5a3f2b]">
+            Iniciar sesión
           </h1>
-          <p className="text-gray-400 mt-2 font-sans">Inicia sesión en la Biblioteca Virtual</p>
+          <p className="mt-2 font-sans text-[#6f523c]">Inicia sesión en la Biblioteca Virtual</p>
         </div>
 
         {successMessage && (
-          <div className="bg-green-500/10 border border-green-500/50 text-green-500 p-3 rounded-lg text-xs font-mono relative z-10">
-            [ÉXITO]: {successMessage}
+          <div className="relative z-10 rounded-xl border-2 border-[#9faf92] bg-[#eef4e8] p-3 text-xs font-mono text-[#566b4a]">
+            Éxito: {successMessage}
           </div>
         )}
 
         {error && (
-          <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-3 rounded-lg text-xs font-mono relative z-10 animate-pulse">
-            [ERROR]: {error}
+          <div className="relative z-10 animate-pulse rounded-xl border-2 border-[#d7a59d] bg-[#f5dfd8] p-3 text-xs font-mono text-[#8a3f34]">
+            Error: {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
           <div>
-            <label className="block text-gray-500 text-[10px] font-bold mb-1 font-mono uppercase tracking-widest" htmlFor="email">
-              CORREO_ELECTRÓNICO
+            <label className={theme.label} htmlFor="email">
+              Correo electrónico
             </label>
             <input 
               type="email" 
               id="email"
               value={formData.email}
               onChange={handleChange}
-              className="w-full bg-black/50 border border-gray-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-mono text-sm"
-              placeholder="usuario@sistema.com"
+              className={theme.input}
+              placeholder="usuario@correo.cl"
               required
             />
           </div>
           <div>
-            <label className="block text-gray-500 text-[10px] font-bold mb-1 font-mono uppercase tracking-widest" htmlFor="password">
-              CLAVE_ACCESO
+            <label className={theme.label} htmlFor="password">
+              Contraseña
             </label>
             <input 
               type="password" 
               id="password"
               value={formData.password}
               onChange={handleChange}
-              className="w-full bg-black/50 border border-gray-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all font-mono text-sm"
+              className={theme.input}
               placeholder="••••••••"
               required
             />
           </div>
           <div className="flex items-center justify-between">
-            <a href="#" className="text-xs text-blue-500 hover:underline font-mono">./olvide_mi_clave</a>
+            <a href="#" className="text-xs font-mono text-[#7f5c40] transition-colors hover:text-[#5a3f2b] hover:underline">Olvidé mi clave</a>
           </div>
           <div>
             <Button 
@@ -104,16 +108,16 @@ const Login = () => {
               className={`w-full py-3 text-sm ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
               disabled={loading}
             >
-              {loading ? './autenticando...' : './ejecutar_autenticacion'}
+              {loading ? 'Iniciando sesión...' : 'Entrar'}
             </Button>
           </div>
         </form>
 
-        <div className="text-center pt-4 border-t border-gray-800/50 relative z-10">
-          <p className="text-gray-500 text-xs">
+        <div className="relative z-10 border-t-2 border-[#d2b08f] pt-4 text-center">
+          <p className="text-xs text-[#7f5c40]">
             ¿No tienes cuenta? {' '}
-            <Link to="/register" className="text-blue-500 hover:text-blue-400 font-mono transition-colors">
-              ./crear_nueva_cuenta
+            <Link to="/register" className="font-mono text-[#5a3f2b] transition-colors hover:text-[#3f2b1d]">
+              Crear una cuenta
             </Link>
           </p>
         </div>

@@ -36,56 +36,56 @@ const Home = () => {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-10 space-y-24">
+    <div className="mx-auto w-full max-w-7xl space-y-24 bg-[#e7d4bf] px-4 py-10 text-[#4b3525] sm:px-6 lg:px-8">
       <Hero />
 
       {/* RECOMENDACIONES IA */}
       <section className="px-4">
-        <h2 className="text-3xl font-bold text-white mb-10 text-center font-mono tracking-tighter uppercase border-b border-gray-800 pb-4 max-w-md mx-auto text-blue-500">
-          {'//'} RECOMENDACIONES_IA
+        <h2 className="mx-auto mb-10 max-w-md border-b-2 border-[#b9926d] pb-4 text-center font-mono text-3xl font-bold uppercase tracking-tighter text-[#6a4a33]">
+          LA COMUNIDAD DE LOS LECTORES
         </h2>
         <Carousel />
       </section>
 
       {/* LISTAS TOP SELECCIONADAS */}
       <section className="px-4">
-        <h2 className="text-3xl font-bold text-white mb-10 text-center font-mono tracking-tighter uppercase border-b border-gray-800 pb-4 max-w-md mx-auto text-yellow-500">
-          {'//'} LISTAS_TOP_SELECCIONADAS
+        <h2 className="mx-auto mb-10 max-w-md border-b-2 border-[#b9926d] pb-4 text-center font-mono text-3xl font-bold uppercase tracking-tighter text-[#6a4a33]">
+          LISTAS TOP SELECCIONADAS
         </h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Top Thriller */}
-          <div className="bg-gray-900/30 border border-gray-800 rounded-3xl p-8 hover:border-yellow-500/30 transition-all group">
-            <h3 className="text-xl font-bold text-white mb-6 font-mono flex items-center gap-3">
-              <span className="text-yellow-500">[01]</span> LOS_5_MEJORES_PARA_EL_THRILLER
+          <div className="group rounded-3xl border-2 border-[#b9926d] bg-[#fffaf4] p-8 shadow-[0_18px_44px_rgba(95,69,47,0.16)] transition-all hover:border-[#9d7553]">
+            <h3 className="mb-6 flex items-center gap-3 font-mono text-xl font-bold text-[#5a3f2b]">
+              LOS 5 MEJORES PARA EL THRILLER
             </h3>
             <div className="space-y-4">
               {['El Psicoanalista', 'Reina Roja', 'El Silencio de los Corderos', 'Perdida', 'La Paciente Silenciosa'].map((book, i) => (
-                <div key={i} className="flex items-center gap-4 text-gray-400 group-hover:text-gray-300 transition-colors">
-                  <span className="text-[10px] font-mono text-yellow-500/50">0{i+1}.</span>
+                <div key={i} className="flex items-center gap-4 text-[#6f523c] transition-colors group-hover:text-[#4b3525]">
+                  <span className="text-[10px] font-mono text-[#9d7553]">0{i+1}.</span>
                   <span className="text-sm font-medium">{book}</span>
                 </div>
               ))}
             </div>
-            <div className="mt-8 pt-6 border-t border-gray-800">
-              <Button variant="outline" className="w-full text-[10px] border-yellow-500/50 text-yellow-500 hover:bg-yellow-500 hover:text-black">./acceder_al_thriller</Button>
+            <div className="mt-8 border-t-2 border-[#d2b08f] pt-6">
+              <Button variant="outline" className="w-full border-[#9d7553] bg-[#f8ede2] text-[10px] text-[#5a3f2b] hover:border-[#7f5c40] hover:bg-[#d8bb9e] hover:text-[#3f2b1d]">Acceder al thriller</Button>
             </div>
           </div>
 
           {/* Top Clásicos */}
-          <div className="bg-gray-900/30 border border-gray-800 rounded-3xl p-8 hover:border-blue-500/30 transition-all group">
-            <h3 className="text-xl font-bold text-white mb-6 font-mono flex items-center gap-3">
-              <span className="text-blue-500">[02]</span> CLÁSICOS_QUE_NO_SON_ABURRIDOS
+          <div className="group rounded-3xl border-2 border-[#b9926d] bg-[#fffaf4] p-8 shadow-[0_18px_44px_rgba(95,69,47,0.16)] transition-all hover:border-[#9d7553]">
+            <h3 className="mb-6 flex items-center gap-3 font-mono text-xl font-bold text-[#5a3f2b]">
+              CLÁSICOS QUE NO SON ABURRIDOS
             </h3>
             <div className="space-y-4">
               {['1984', 'Crónica de una muerte anunciada', 'El Retrato de Dorian Gray', 'Rebelión en la Granja', 'El Gran Gatsby'].map((book, i) => (
-                <div key={i} className="flex items-center gap-4 text-gray-400 group-hover:text-gray-300 transition-colors">
-                  <span className="text-[10px] font-mono text-blue-500/50">0{i+1}.</span>
+                <div key={i} className="flex items-center gap-4 text-[#6f523c] transition-colors group-hover:text-[#4b3525]">
+                  <span className="text-[10px] font-mono text-[#9d7553]">0{i+1}.</span>
                   <span className="text-sm font-medium">{book}</span>
                 </div>
               ))}
             </div>
-            <div className="mt-8 pt-6 border-t border-gray-800">
-              <Button variant="outline" className="w-full text-[10px] border-blue-500/50 text-blue-500 hover:bg-blue-500 hover:text-black">./explorar_clasicos</Button>
+            <div className="mt-8 border-t-2 border-[#d2b08f] pt-6">
+              <Button variant="outline" className="w-full border-[#9d7553] bg-[#f8ede2] text-[10px] text-[#5a3f2b] hover:border-[#7f5c40] hover:bg-[#d8bb9e] hover:text-[#3f2b1d]">Explorar clásicos</Button>
             </div>
           </div>
         </div>
@@ -93,21 +93,21 @@ const Home = () => {
 
       {/* NOVEDADES DEL SISTEMA */}
       <section className="px-4">
-        <h2 className="text-3xl font-bold text-white mb-10 text-center font-mono tracking-tighter uppercase border-b border-gray-800 pb-4 max-w-md mx-auto text-red-500">
-          {'//'} NOVEDADES_DEL_SISTEMA
+        <h2 className="mx-auto mb-10 max-w-md border-b-2 border-[#b9926d] pb-4 text-center font-mono text-3xl font-bold uppercase tracking-tighter text-[#6a4a33]">
+          NOVEDADES
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 bg-red-600 text-white text-[10px] font-bold px-3 py-1 uppercase tracking-widest">NUEVO_INGRESO</div>
-            <h3 className="text-white font-bold text-xl mb-2 font-mono">./SISTEMAS_OPERATIVOS_2026</h3>
-            <p className="text-gray-400 text-sm mb-4">Actualización crítica del archivo sobre arquitecturas modernas y kernels distribuidos.</p>
-            <Button variant="outline" className="text-xs py-1">./ver_detalles</Button>
+          <div className="group relative overflow-hidden rounded-2xl border-2 border-[#b9926d] bg-[#fffaf4] p-6 shadow-[0_16px_36px_rgba(95,69,47,0.16)]">
+            <div className="absolute top-0 right-0 bg-[#8f6443] px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-[#fffaf5]">Nuevo ingreso</div>
+            <h3 className="mb-2 font-mono text-xl font-bold text-[#5a3f2b]">SISTEMAS OPERATIVOS 2026</h3>
+            <p className="mb-4 text-sm text-[#6f523c]">Actualización crítica del archivo sobre arquitecturas modernas y kernels distribuidos.</p>
+            <Button variant="outline" className="border-[#9d7553] bg-[#f8ede2] py-1 text-xs text-[#5a3f2b] hover:bg-[#d8bb9e] hover:text-[#3f2b1d]">Ver detalles</Button>
           </div>
-          <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 bg-blue-600 text-white text-[10px] font-bold px-3 py-1 uppercase tracking-widest">DESTACADO_MES</div>
-            <h3 className="text-white font-bold text-xl mb-2 font-mono">./IA_GENERATIVA_EN_MAIPÚ</h3>
-            <p className="text-gray-400 text-sm mb-4">Análisis local sobre el impacto de la inteligencia artificial en el desarrollo comunal.</p>
-            <Button variant="outline" className="text-xs py-1">./ver_detalles</Button>
+          <div className="group relative overflow-hidden rounded-2xl border-2 border-[#b9926d] bg-[#fffaf4] p-6 shadow-[0_16px_36px_rgba(95,69,47,0.16)]">
+            <div className="absolute top-0 right-0 bg-[#d8bb9e] px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-[#4b3525]">Destacado mes</div>
+            <h3 className="mb-2 font-mono text-xl font-bold text-[#5a3f2b]">IA GENERATIVA EN MAIPÚ</h3>
+            <p className="mb-4 text-sm text-[#6f523c]">Análisis local sobre el impacto de la inteligencia artificial en el desarrollo comunal.</p>
+            <Button variant="outline" className="border-[#9d7553] bg-[#f8ede2] py-1 text-xs text-[#5a3f2b] hover:bg-[#d8bb9e] hover:text-[#3f2b1d]">Ver detalles</Button>
           </div>
         </div>
       </section>
@@ -115,10 +115,10 @@ const Home = () => {
       {/* LIBROS DESTACADOS */}
       <section>
         <div className="flex flex-col sm:flex-row justify-between items-center mb-12 px-4 space-y-4 sm:space-y-0">
-          <h2 className="text-3xl font-bold text-white font-mono tracking-tighter uppercase border-l-4 border-blue-600 pl-4">
-            {'//'} LIBROS DESTACADOS
+          <h2 className="border-l-4 border-[#8f6443] pl-4 font-mono text-3xl font-bold uppercase tracking-tighter text-[#5a3f2b]">
+            LIBROS DESTACADOS
           </h2>
-          <Button variant="outline" to="/catalogo">./ver_catalogo</Button>
+          <Button variant="outline" className="border-[#9d7553] bg-[#f8ede2] text-[#5a3f2b] hover:bg-[#d8bb9e] hover:text-[#3f2b1d]" to="/catalogo">Ver catalogo</Button>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 px-4">
@@ -136,16 +136,16 @@ const Home = () => {
       </section>
 
       {/* CALL TO ACTION FINAL */}
-      <section className="bg-gray-900/50 border border-gray-800 rounded-3xl p-12 text-center shadow-2xl mx-4">
-        <h3 className="text-3xl font-bold text-white mb-6 font-mono tracking-tighter uppercase">
+      <section className="mx-4 rounded-3xl border-2 border-[#9faf92] bg-[#eef4e8] p-12 text-center shadow-[0_20px_48px_rgba(79,95,73,0.16)]">
+        <h3 className="mb-6 font-mono text-3xl font-bold uppercase tracking-tighter text-[#5a3f2b]">
           ¿LISTO PARA EMPEZAR A LEER?
         </h3>
-        <p className="text-gray-400 mb-12 max-w-2xl mx-auto text-lg leading-relaxed font-sans">
+        <p className="mx-auto mb-12 max-w-2xl font-sans text-lg leading-relaxed text-[#4f5f49]">
           Únete a nuestra comunidad de lectores hoy mismo y accede a miles de recursos educativos gratuitos. 
           Crea tu cuenta en segundos y lleva tu biblioteca personal a todas partes.
         </p>
         <div className="flex justify-center">
-          <Button variant="primary" className="px-12 py-4 text-lg" to="/register">./crear_cuenta_gratis</Button>
+          <Button variant="primary" className="border-[#6f8a60] bg-[#6f8a60] px-12 py-4 text-lg text-[#fffaf5] hover:bg-[#566b4a] hover:text-[#fffaf5]" to="/register">Crear cuenta gratis</Button>
         </div>
       </section>
     </div>

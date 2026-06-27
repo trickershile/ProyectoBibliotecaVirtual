@@ -5,6 +5,8 @@ import { ordersApi } from '../api/orders';
 import { paymentsApi } from '../api/payments';
 import { withApiOrigin } from '../lib/supabase';
 import { checkoutCart, getCart, removeCartItem } from '../lib/cart';
+import { formatPaymentMethod, formatPaymentStatus } from '../lib/labels';
+import { statusStyles, theme } from '../lib/theme';
 
 const Cart = () => {
   const [cartItems, setCartItems] = useState([]);
@@ -25,7 +27,7 @@ const Cart = () => {
     } catch (error) {
       console.error('Error al cargar el carrito:', error);
       window.dispatchEvent(new CustomEvent('show-toast', {
-        detail: { message: '[!] No se pudo cargar el carrito_' }
+        detail: { message: 'No se pudo cargar el carrito.' }
       }));
     } finally {
       setLoading(false);
@@ -36,7 +38,7 @@ const Cart = () => {
     const updatedCart = await removeCartItem(cartItemId);
     setCartItems(updatedCart);
     window.dispatchEvent(new CustomEvent('show-toast', { 
-      detail: { message: `Ejemplar removido del sistema_` } 
+      detail: { message: 'Ejemplar eliminado del carrito.' } 
     }));
   };
 
@@ -52,7 +54,7 @@ const Cart = () => {
       const sbUser = JSON.parse(localStorage.getItem('sb_user') || 'null');
       if (!sbUser) {
         window.dispatchEvent(new CustomEvent('show-toast', { 
-          detail: { message: "[!] Debes iniciar sesión para confirmar el pedido_" } 
+          detail: { message: 'Debes iniciar sesión para confirmar el pedido.' } 
         }));
         return;
       }
@@ -73,7 +75,7 @@ const Cart = () => {
       });
       setCartItems([]);
       window.dispatchEvent(new CustomEvent('show-toast', {
-        detail: { message: 'Pago confirmado y orden registrada correctamente_' }
+        detail: { message: 'Pago confirmado y orden registrada correctamente.' }
       }));
 
     } catch (error) {
@@ -94,7 +96,7 @@ const Cart = () => {
           });
           setCartItems([]);
           window.dispatchEvent(new CustomEvent('show-toast', {
-            detail: { message: '[!] La orden fue creada, pero el pago quedó pendiente de confirmación_' }
+            detail: { message: 'La orden fue creada, pero el pago quedó pendiente de confirmación.' }
           }));
           return;
         } catch (recoveryError) {
@@ -102,7 +104,7 @@ const Cart = () => {
         }
       }
       window.dispatchEvent(new CustomEvent('show-toast', { 
-        detail: { message: "[!] Error al procesar el pago o confirmar el pedido_" } 
+        detail: { message: 'Error al procesar el pago o confirmar el pedido.' } 
       }));
     } finally {
       setSubmittingOrder(false);
@@ -112,36 +114,36 @@ const Cart = () => {
   if (orderSuccess) {
     const paymentCompleted = orderSuccess.payment?.estado === 'pagado';
     return (
-      <div className="min-h-screen bg-[#0a0a0a] text-white p-6 font-mono flex items-center justify-center">
-        <div className={`max-w-2xl w-full bg-gray-900/50 rounded-3xl p-10 text-center space-y-8 shadow-2xl ${
-          paymentCompleted ? 'border border-green-500/30' : 'border border-yellow-500/30'
+      <div className={`${theme.pageShell} flex items-center justify-center`}>
+        <div className={`w-full max-w-2xl space-y-8 rounded-3xl p-10 text-center shadow-[0_20px_48px_rgba(95,69,47,0.16)] ${
+          paymentCompleted ? 'border-2 border-[#9faf92] bg-[#eef4e8]' : 'border-2 border-[#d7b988] bg-[#fff4df]'
         }`}>
-          <div className="relative mx-auto w-24 h-24">
-            <CheckCircle2 className={`w-24 h-24 ${paymentCompleted ? 'text-green-500' : 'text-yellow-500'}`} />
-            <div className={`absolute inset-0 blur-2xl rounded-full ${paymentCompleted ? 'bg-green-500/20' : 'bg-yellow-500/20'}`}></div>
+          <div className="relative mx-auto h-24 w-24">
+            <CheckCircle2 className={`h-24 w-24 ${paymentCompleted ? 'text-[#6f8a60]' : 'text-[#b9926d]'}`} />
+            <div className={`absolute inset-0 rounded-full blur-2xl ${paymentCompleted ? 'bg-[#9faf92]/35' : 'bg-[#d7b988]/35'}`}></div>
           </div>
           
           <div className="space-y-3">
-            <h2 className="text-3xl font-black uppercase tracking-tighter">
-              {paymentCompleted ? '¡PAGO CONFIRMADO!' : 'ORDEN CREADA, PAGO PENDIENTE'}
+            <h2 className="text-3xl font-black uppercase tracking-tighter text-[#5a3f2b]">
+              {paymentCompleted ? 'Pago confirmado' : 'Orden creada, pago pendiente'}
             </h2>
-            <p className="text-gray-400 text-sm">
+            <p className="text-sm text-[#6f523c]">
               Tu solicitud #{orderSuccess._id} {paymentCompleted ? 'ha sido procesada exitosamente.' : 'quedó registrada y espera validación de pago.'}
             </p>
             {orderSuccess.payment && (
-              <p className={`text-xs uppercase tracking-widest font-bold ${paymentCompleted ? 'text-emerald-300' : 'text-yellow-300'}`}>
-                Pago {orderSuccess.payment.estado} por ${(orderSuccess.payment.monto || 0).toLocaleString('es-CL')} vía {orderSuccess.payment.metodo_pago}
+              <p className={`text-xs font-bold uppercase tracking-widest ${paymentCompleted ? 'text-[#566b4a]' : 'text-[#8a633f]'}`}>
+                Pago {formatPaymentStatus(orderSuccess.payment.estado)} por ${(orderSuccess.payment.monto || 0).toLocaleString('es-CL')} vía {formatPaymentMethod(orderSuccess.payment.metodo_pago)}
               </p>
             )}
           </div>
 
-          <div className="bg-black/40 border border-gray-800 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex flex-col items-center justify-between gap-6 rounded-2xl border-2 border-[#d2b08f] bg-[#fffaf4] p-6 md:flex-row">
             <div className="text-left">
-              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">COMPROBANTE_DIGITAL</p>
-              <p className="text-xs text-gray-300">
+              <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-[#7f5c40]">Comprobante digital</p>
+              <p className="text-xs text-[#6f523c]">
                 {orderSuccess.receipt_url
-                  ? 'Descarga tu recibo para el retiro en sede_'
-                  : 'La orden quedó registrada y podrás seguir su estado desde tu perfil_'}
+                  ? 'Descarga tu recibo para el retiro en sede.'
+                  : 'La orden quedó registrada y podrás seguir su estado desde tu perfil.'}
               </p>
             </div>
             {orderSuccess.receipt_url ? (
@@ -149,21 +151,21 @@ const Cart = () => {
                 href={withApiOrigin(orderSuccess.receipt_url)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-3 px-6 py-3 bg-white text-black font-black text-[10px] rounded-xl hover:bg-blue-500 hover:text-white transition-all uppercase tracking-widest shadow-xl"
+                className={`${theme.outlineButton} flex items-center gap-3 px-6 py-3`}
               >
                 <Download className="w-4 h-4" />
-                DESCARGAR_PDF
+                Descargar PDF
               </a>
             ) : (
-              <div className="px-6 py-3 bg-blue-500/10 text-blue-300 font-black text-[10px] rounded-xl border border-blue-500/20 uppercase tracking-widest">
-                ORDEN_REGISTRADA
+              <div className={`px-6 py-3 text-[10px] font-black uppercase tracking-widest ${theme.statusBadge} ${statusStyles.info}`}>
+                Orden registrada
               </div>
             )}
           </div>
 
-          <div className="pt-6 border-t border-gray-800">
-            <Link to="/catalogo" className="text-blue-500 hover:text-blue-400 text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2">
-              <ArrowRight className="w-3 h-3 rotate-180" /> VOLVER_AL_CATÁLOGO
+          <div className="border-t-2 border-[#d2b08f] pt-6">
+            <Link to="/catalogo" className="flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[#5a3f2b] transition-colors hover:text-[#3f2b1d]">
+              <ArrowRight className="w-3 h-3 rotate-180" /> Volver al catálogo
             </Link>
           </div>
         </div>
@@ -172,36 +174,36 @@ const Cart = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white p-6 font-mono">
-      <div className="max-w-5xl mx-auto space-y-8">
+    <div className={theme.pageShell}>
+      <div className={theme.pageContainer}>
         
-        <div className="border-b border-gray-800 pb-6">
-          <h1 className="text-4xl font-bold tracking-tighter uppercase text-blue-500 flex items-center gap-3">
-            <ShoppingCart className="w-8 h-8" /> {'>'} CARRITO_DE_COMPRAS
+        <div className={theme.pageHeader}>
+          <h1 className={theme.pageTitleRow}>
+            <ShoppingCart className="w-8 h-8" /> Carrito de compras
           </h1>
-          <p className="text-gray-400 mt-2">Revisión de ejemplares seleccionados para adquisición institucional_</p>
+          <p className={theme.pageSubtitle}>Revisión de ejemplares seleccionados para compra.</p>
         </div>
 
         {loading ? (
-          <div className="text-center py-24 border-2 border-dashed border-gray-800 rounded-3xl bg-gray-900/10 space-y-6">
-            <Loader2 className="w-10 h-10 text-blue-500 animate-spin mx-auto" />
-            <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">CARGANDO_CARRITO_BACKEND_</p>
+          <div className={`${theme.emptyState} space-y-6 py-24`}>
+            <Loader2 className="mx-auto h-10 w-10 animate-spin text-[#8f6443]" />
+            <p className="text-xs font-bold uppercase tracking-widest text-[#7f5c40]">Cargando carrito...</p>
           </div>
         ) : cartItems.length === 0 ? (
-          <div className="text-center py-24 border-2 border-dashed border-gray-800 rounded-3xl bg-gray-900/10 space-y-6">
+          <div className={`${theme.emptyState} space-y-6 py-24`}>
             <div className="relative mx-auto w-20 h-20">
-              <ShoppingCart className="w-20 h-20 text-gray-800" />
-              <div className="absolute top-0 right-0 w-6 h-6 bg-red-500/20 rounded-full flex items-center justify-center border border-red-500/30">
-                <span className="text-red-500 text-[10px] font-bold">0</span>
+              <ShoppingCart className="h-20 w-20 text-[#b9926d]" />
+              <div className="absolute top-0 right-0 flex h-6 w-6 items-center justify-center rounded-full border-2 border-[#d7a59d] bg-[#f5dfd8]">
+                <span className="text-[10px] font-bold text-[#8a3f34]">0</span>
               </div>
             </div>
             <div className="space-y-2">
-              <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">[!] EL_CARRITO_ESTÁ_VACÍO</p>
-              <p className="text-gray-600 text-[10px]">No se han detectado registros de libros en tu sesión actual.</p>
+              <p className="text-xs font-bold uppercase tracking-widest text-[#7f5c40]">El carrito está vacío</p>
+              <p className="text-[10px] text-[#9d7553]">Todavía no has agregado libros a tu sesión actual.</p>
             </div>
             <Link 
               to="/catalogo" 
-              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold text-[10px] transition-all uppercase tracking-widest shadow-[0_0_20px_rgba(37,99,235,0.2)]"
+              className={`${theme.primaryButton} inline-flex items-center gap-2 px-6 py-3 shadow-[0_12px_24px_rgba(95,69,47,0.18)]`}
             >
               Ir al catálogo <ArrowRight className="w-3 h-3" />
             </Link>
@@ -209,15 +211,15 @@ const Cart = () => {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-4">
-              <div className="bg-gray-900/30 border border-gray-800 rounded-2xl overflow-hidden">
-                <div className="p-4 border-b border-gray-800 bg-gray-900/50 flex justify-between items-center">
-                  <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">ACTIVOS_LITERARIOS ({cartItems.length})</span>
-                  <span className="text-[9px] text-blue-400 font-bold">ID_SESIÓN: {Math.random().toString(36).substr(2, 9).toUpperCase()}</span>
+              <div className={`${theme.sectionCard} overflow-hidden p-0`}>
+                <div className="flex items-center justify-between border-b-2 border-[#d2b08f] bg-[#f8ede2] p-4">
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#7f5c40]">Libros seleccionados ({cartItems.length})</span>
+                  <span className="text-[9px] font-bold text-[#5a3f2b]">Sesión: {Math.random().toString(36).substr(2, 9).toUpperCase()}</span>
                 </div>
-                <div className="divide-y divide-gray-800">
+                <div className="divide-y-2 divide-[#ead4bd]">
                   {cartItems.map((item) => (
-                    <div key={item.cart_item_id || item._id || item.id} className="p-4 flex gap-4 group hover:bg-white/5 transition-all">
-                      <div className="w-16 h-20 bg-black rounded-lg overflow-hidden border border-gray-800 flex-shrink-0">
+                    <div key={item.cart_item_id || item._id || item.id} className="group flex gap-4 p-4 transition-all hover:bg-[#fff3e7]">
+                      <div className="h-20 w-16 flex-shrink-0 overflow-hidden rounded-lg border-2 border-[#d2b08f] bg-[#f3e4d4]">
                         <img 
                           src={item.image_url ? withApiOrigin(item.image_url) : "https://via.placeholder.com/150x200?text=BOOK"} 
                           alt={item.title} 
@@ -227,23 +229,23 @@ const Cart = () => {
                       <div className="flex-grow min-w-0">
                         <div className="flex justify-between items-start">
                           <div>
-                            <h3 className="text-sm font-bold text-white truncate uppercase tracking-tighter group-hover:text-blue-400 transition-colors">{item.title}</h3>
-                            <p className="text-[10px] text-gray-500 italic mt-0.5">Autor: {item.author}</p>
-                            <p className="text-[9px] text-gray-600 font-bold mt-1">Cantidad: {item.quantity || 1}</p>
+                            <h3 className="truncate text-sm font-bold uppercase tracking-tighter text-[#5a3f2b] transition-colors group-hover:text-[#3f2b1d]">{item.title}</h3>
+                            <p className="mt-0.5 text-[10px] italic text-[#7f5c40]">Autor: {item.author}</p>
+                            <p className="mt-1 text-[9px] font-bold text-[#9d7553]">Cantidad: {item.quantity || 1}</p>
                           </div>
                           <button 
                             onClick={() => removeItem(item.cart_item_id)}
-                            className="p-1.5 text-gray-600 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+                            className="rounded-lg p-1.5 text-[#9d7553] transition-all hover:bg-[#f5dfd8] hover:text-[#8a3f34]"
                             title="Remover activo"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                         <div className="mt-3 flex items-center justify-between">
-                          <span className="px-2 py-0.5 bg-blue-500/10 text-blue-400 text-[8px] font-bold rounded border border-blue-500/20 uppercase">
+                          <span className={`rounded border-2 px-2 py-0.5 text-[8px] font-bold uppercase ${statusStyles.info}`}>
                             {(item.categories && item.categories[0]) || 'General'}
                           </span>
-                          <span className="text-sm font-black text-white">
+                          <span className="text-sm font-black text-[#5a3f2b]">
                             ${((item.price || 0) * (item.quantity || 1)).toLocaleString('es-CL')}
                           </span>
                         </div>
@@ -253,11 +255,11 @@ const Cart = () => {
                 </div>
               </div>
 
-              <div className="flex items-start gap-3 p-4 bg-blue-500/5 border border-blue-500/20 rounded-2xl">
-                <Info className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
+              <div className="flex items-start gap-3 rounded-2xl border-2 border-[#d2b08f] bg-[#f8ede2] p-4">
+                <Info className="mt-0.5 h-5 w-5 flex-shrink-0 text-[#8f6443]" />
                 <div className="space-y-1">
-                  <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest">AVISO_SISTEMA</p>
-                  <p className="text-[9px] text-gray-400 leading-relaxed">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-[#7f5c40]">Aviso</p>
+                  <p className="text-[9px] leading-relaxed text-[#6f523c]">
                     Los libros serán reservados por un periodo máximo de 48 horas. La entrega se realizará en la sede especificada para cada ejemplar tras la validación de la transacción.
                   </p>
                 </div>
@@ -265,34 +267,34 @@ const Cart = () => {
             </div>
 
             <div className="space-y-4">
-              <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-6 space-y-6 sticky top-24 shadow-2xl">
-                <h2 className="text-[11px] font-black text-white uppercase tracking-[0.2em] border-b border-gray-800 pb-3">RESUMEN_ORDEN</h2>
+              <div className={`sticky top-24 space-y-6 ${theme.sectionCard} shadow-[0_20px_48px_rgba(95,69,47,0.16)]`}>
+                <h2 className="border-b-2 border-[#d2b08f] pb-3 text-[11px] font-black uppercase tracking-[0.2em] text-[#5a3f2b]">Resumen de la orden</h2>
                 
                 <div className="space-y-3">
                   <div className="flex justify-between text-[11px]">
-                    <span className="text-gray-500">SUBTOTAL_LIBROS</span>
-                    <span className="text-white font-bold">${calculateTotal().toLocaleString('es-CL')}</span>
+                    <span className="text-[#7f5c40]">Subtotal libros</span>
+                    <span className="font-bold text-[#5a3f2b]">${calculateTotal().toLocaleString('es-CL')}</span>
                   </div>
                   <div className="flex justify-between text-[11px]">
-                    <span className="text-gray-500">CARGOS_SERVICIO</span>
-                    <span className="text-green-500 font-bold">$0 (GRATIS)</span>
+                    <span className="text-[#7f5c40]">Cargos de servicio</span>
+                    <span className="font-bold text-[#566b4a]">$0 (Gratis)</span>
                   </div>
                   <div className="flex justify-between text-[11px]">
-                    <span className="text-gray-500">SEDES_INVOLUCRADAS</span>
-                    <span className="text-blue-400 font-bold">{new Set(cartItems.map(i => i.pickup_location)).size}</span>
+                    <span className="text-[#7f5c40]">Sedes involucradas</span>
+                    <span className="font-bold text-[#5a3f2b]">{new Set(cartItems.map(i => i.pickup_location)).size}</span>
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-gray-800 space-y-3">
-                  <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest">MÉTODO_DE_PAGO</p>
+                <div className="space-y-3 border-t-2 border-[#d2b08f] pt-4">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-[#7f5c40]">Método de pago</p>
                   <div className="grid grid-cols-1 gap-2">
                     <button
                       type="button"
                       onClick={() => setPaymentMethod('tarjeta')}
                       className={`px-4 py-3 rounded-xl border text-left text-[10px] font-bold uppercase transition-all ${
                         paymentMethod === 'tarjeta'
-                          ? 'border-blue-500 bg-blue-500/10 text-blue-300'
-                          : 'border-gray-800 bg-black/30 text-gray-400 hover:border-gray-700'
+                          ? 'border-[#6f8a60] bg-[#eef4e8] text-[#566b4a]'
+                          : 'border-[#d2b08f] bg-[#fffaf4] text-[#7f5c40] hover:border-[#9d7553]'
                       }`}
                     >
                       Tarjeta de débito/crédito
@@ -302,8 +304,8 @@ const Cart = () => {
                       onClick={() => setPaymentMethod('transferencia')}
                       className={`px-4 py-3 rounded-xl border text-left text-[10px] font-bold uppercase transition-all ${
                         paymentMethod === 'transferencia'
-                          ? 'border-blue-500 bg-blue-500/10 text-blue-300'
-                          : 'border-gray-800 bg-black/30 text-gray-400 hover:border-gray-700'
+                          ? 'border-[#6f8a60] bg-[#eef4e8] text-[#566b4a]'
+                          : 'border-[#d2b08f] bg-[#fffaf4] text-[#7f5c40] hover:border-[#9d7553]'
                       }`}
                     >
                       Transferencia bancaria
@@ -313,8 +315,8 @@ const Cart = () => {
                       onClick={() => setPaymentMethod('presencial')}
                       className={`px-4 py-3 rounded-xl border text-left text-[10px] font-bold uppercase transition-all ${
                         paymentMethod === 'presencial'
-                          ? 'border-blue-500 bg-blue-500/10 text-blue-300'
-                          : 'border-gray-800 bg-black/30 text-gray-400 hover:border-gray-700'
+                          ? 'border-[#6f8a60] bg-[#eef4e8] text-[#566b4a]'
+                          : 'border-[#d2b08f] bg-[#fffaf4] text-[#7f5c40] hover:border-[#9d7553]'
                       }`}
                     >
                       Pago presencial en retiro
@@ -322,10 +324,10 @@ const Cart = () => {
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-gray-800">
+                <div className="border-t-2 border-[#d2b08f] pt-4">
                   <div className="flex justify-between items-end mb-6">
-                    <span className="text-gray-500 text-[10px] font-bold uppercase tracking-widest">TOTAL_A_PAGAR</span>
-                    <span className="text-2xl font-black text-white leading-none">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-[#7f5c40]">Total a pagar</span>
+                    <span className="text-2xl font-black leading-none text-[#5a3f2b]">
                       ${calculateTotal().toLocaleString('es-CL')}
                     </span>
                   </div>
@@ -333,15 +335,15 @@ const Cart = () => {
                   <button 
                     onClick={handleConfirmOrder}
                     disabled={submittingOrder}
-                    className="w-full py-4 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded-xl font-black text-[10px] uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 shadow-[0_0_30px_rgba(37,99,235,0.2)] hover:scale-[1.02]"
+                    className="flex w-full items-center justify-center gap-3 rounded-xl border-2 border-[#6f8a60] bg-[#6f8a60] py-4 text-[10px] font-black uppercase tracking-[0.2em] text-[#fffaf5] transition-all hover:scale-[1.02] hover:bg-[#566b4a] disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {submittingOrder ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
-                    PAGAR_Y_CONFIRMAR_PEDIDO
+                    Pagar y confirmar pedido
                   </button>
                   
-                  <div className="mt-4 flex items-center justify-center gap-2 text-[8px] text-gray-600 font-bold uppercase tracking-tighter">
+                  <div className="mt-4 flex items-center justify-center gap-2 text-[8px] font-bold uppercase tracking-tighter text-[#9d7553]">
                     <Clock className="w-3 h-3" />
-                    Procesamiento asíncrono seguro_
+                    Procesamiento seguro
                   </div>
                 </div>
               </div>

@@ -35,7 +35,7 @@ const Carousel = () => {
   }, []);
 
   return (
-    <div className="relative w-full max-w-5xl mx-auto h-[400px] md:h-[500px] overflow-hidden rounded-3xl shadow-2xl group">
+    <div className="group relative mx-auto h-[400px] w-full max-w-5xl overflow-hidden rounded-3xl border-2 border-[#aa7f5d] shadow-[0_22px_52px_rgba(95,69,47,0.18)] md:h-[500px]">
       {/* Slides */}
       {images.map((image, index) => (
         <div
@@ -49,9 +49,11 @@ const Carousel = () => {
             alt={image.title}
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-black/40 flex flex-col justify-center items-center text-white p-6 text-center">
-            <h2 className="text-3xl md:text-5xl font-bold mb-4 drop-shadow-lg">{image.title}</h2>
-            <p className="text-lg md:text-xl drop-shadow-md max-w-lg">{image.description}</p>
+          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-t from-[#2f2118]/70 via-[#6a4c38]/35 to-[#fff7ee1a] p-6">
+            <div className="max-w-3xl rounded-3xl border border-[#f0dfcf]/70 bg-[#fff7ee]/88 px-6 py-8 text-center text-[#3f2b1d] shadow-[0_18px_40px_rgba(47,33,24,0.25)] backdrop-blur-sm md:px-10">
+              <h2 className="mb-4 text-3xl font-bold leading-tight drop-shadow-[0_2px_10px_rgba(255,247,238,0.35)] md:text-5xl">{image.title}</h2>
+              <p className="max-w-2xl text-lg font-medium leading-relaxed text-[#4b3525] md:text-xl">{image.description}</p>
+            </div>
           </div>
         </div>
       ))}
@@ -59,7 +61,7 @@ const Carousel = () => {
       {/* Navigation Buttons */}
       <button
         onClick={prevSlide}
-        className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/50 p-3 rounded-full text-white backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100"
+        className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full border-2 border-[#9d7553] bg-[#fff7ee]/92 p-3 text-[#5a3f2b] opacity-0 backdrop-blur-sm transition-all hover:bg-[#ead4bd] group-hover:opacity-100"
       >
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6">
           <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
@@ -67,7 +69,7 @@ const Carousel = () => {
       </button>
       <button
         onClick={nextSlide}
-        className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/30 hover:bg-white/50 p-3 rounded-full text-white backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100"
+        className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full border-2 border-[#9d7553] bg-[#fff7ee]/92 p-3 text-[#5a3f2b] opacity-0 backdrop-blur-sm transition-all hover:bg-[#ead4bd] group-hover:opacity-100"
       >
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6">
           <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
@@ -81,7 +83,7 @@ const Carousel = () => {
             key={index}
             onClick={() => setCurrentIndex(index)}
             className={`w-3 h-3 rounded-full transition-all ${
-              index === currentIndex ? 'bg-white scale-125' : 'bg-white/50'
+              index === currentIndex ? 'scale-125 bg-[#7f5c40]' : 'bg-[#f8ede2] border border-[#9d7553]'
             }`}
           />
         ))}
