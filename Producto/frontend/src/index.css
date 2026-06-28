@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 body {
@@ -195,19 +195,19 @@ body {
 .pastel-theme input,
 .pastel-theme textarea,
 .pastel-theme select {
-  background: #0b0f14;
-  color: #e7e6f4;
-  border-color: #2a3650;
+  background: #fffaf4;
+  color: #4b3525;
+  border-color: #d2b08f;
 }
 
 .pastel-theme input::placeholder,
 .pastel-theme textarea::placeholder {
-  color: #8f97a7;
+  color: #9d7553;
 }
 
 .pastel-theme input:focus,
 .pastel-theme textarea:focus,
 .pastel-theme select:focus {
-  border-color: #a7d8ff !important;
-  box-shadow: 0 0 0 1px #a7d8ff;
+  border-color: #9d7553 !important;
+  box-shadow: 0 0 0 1px #9d7553;
 }
