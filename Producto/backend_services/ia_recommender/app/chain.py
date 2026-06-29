@@ -3,15 +3,13 @@ import asyncio
 import time
 from pathlib import Path
 from dotenv import load_dotenv
-from langchain_core.prompts import ChatPromptTemplate  # Diseñador de plantillas para prompts
-from groq import Groq  # Importamos el cliente oficial de Groq
+from langchain_core.prompts import ChatPromptTemplate
+from groq import AsyncGroq  # ← corregido: AsyncGroq, no Groq
 import httpx
 
 load_dotenv(dotenv_path=Path(__file__).resolve().parents[2] / ".env")
 
-# Inicializamos el cliente de Groq pasándole la API Key desde el archivo .env
-# En Spring Boot esto equivaldría a configurar el bean de conexión de tu proveedor de LLM
-groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+groq_client = AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
 CATALOG_SERVICE_URL = os.getenv("CATALOG_SERVICE_URL", "http://127.0.0.1:8001")
 
 circuit_breaker = {"failures": 0, "open_until": 0}
@@ -38,12 +36,7 @@ async def _retry_async(fn, attempts: int = 3, base_delay: float = 0.5):
             await asyncio.sleep(min(base_delay * (2 ** i), 5))
     raise last_exc
 
-# --- FUNCIÓN RAG: CONSULTAR CATÁLOGO EN CATALOG_SERVICE ---
 async def obtener_contexto_libros() -> str:
-    """
-    Consulta el catálogo de forma asíncrona vía HTTP (Catalog Service)
-    y lo transforma en texto para darle contexto a la IA.
-    """
     try:
         async def _fetch():
             async with httpx.AsyncClient(timeout=httpx.Timeout(10.0, connect=5.0)) as client:
@@ -57,10 +50,10 @@ async def obtener_contexto_libros() -> str:
             libros = libros[:10]
         else:
             libros = []
-        
+
         if not libros:
             return "No hay libros registrados en el catálogo de la biblioteca actualmente."
-            
+
         contexto = ""
         for l in libros:
             categoria = l.get("categoria") or str(l.get("categoria_id") or "")
@@ -69,18 +62,11 @@ async def obtener_contexto_libros() -> str:
     except Exception:
         return "Error temporal al conectar con el catálogo de libros."
 
-# --- FUNCIÓN PRINCIPAL DE PROCESAMIENTO ---
 async def consultar_asesor_literario(historial_contexto: str, mensaje_usuario: str) -> str:
-    """
-    Une el historial de Redis, los libros de MongoDB (RAG) y genera la 
-    respuesta usando los chips LPUs ultrarrápidos de Groq.
-    """
-    # 1. Recuperamos el estado real del catálogo NoSQL (Paso RAG)
     catalogo_real = await obtener_contexto_libros()
 
-    # 2. Creamos la plantilla con la personalidad de nuestro Asesor Literario (Interface_IA)
     prompt_template = ChatPromptTemplate.from_messages([
-        ("system", """Eres el Asesor Literario oficial de la biblioteca virtual 'Lectura Viva'[cite: 39, 40, 49]. 
+        ("system", """Eres el Asesor Literario oficial de la biblioteca virtual 'Lectura Viva'.
         Tu objetivo es guiar a los socios y recomendarles libros basándote estrictamente en nuestro catálogo real.
         
         CATÁLOGO REAL DE LA BIBLIOTECA:
@@ -96,25 +82,21 @@ async def consultar_asesor_literario(historial_contexto: str, mensaje_usuario: s
         ("human", "{pregunta}")
     ])
 
-    # 3. Formateamos las variables dentro del prompt
     prompt_formateado = prompt_template.format_messages(
         catalogo=catalogo_real,
         historial=historial_contexto,
         pregunta=mensaje_usuario
     )
 
-    # Extraemos el texto plano de los mensajes formateados para enviárselos a Groq
     system_prompt = prompt_formateado[0].content
     user_prompt = prompt_formateado[1].content
 
-    # 4. Petición atómica a la API de Groq usando el modelo Llama 3
-    # En Spring AI esto equivaldría a llamar al método chatClient.call()
+    # ↓ indentación corregida: todo el cuerpo dentro de la función
     async def _call_groq():
         if not _circuit_allow():
             raise RuntimeError("groq_circuit_open")
-
-        def _sync_call():
-            return groq_client.chat.completions.create(
+        try:
+            completion = await groq_client.chat.completions.create(
                 model="llama3-8b-8192",
                 messages=[
                     {"role": "system", "content": system_prompt},
@@ -123,9 +105,6 @@ async def consultar_asesor_literario(historial_contexto: str, mensaje_usuario: s
                 temperature=0.7,
                 max_tokens=1024
             )
-
-        try:
-            completion = await asyncio.to_thread(_sync_call)
             _circuit_on_success()
             return completion
         except Exception:
@@ -133,6 +112,4 @@ async def consultar_asesor_literario(historial_contexto: str, mensaje_usuario: s
             raise
 
     completion = await _retry_async(_call_groq, attempts=3, base_delay=0.5)
-    
-    # Retornamos el contenido de texto de la respuesta generada por la IA
     return completion.choices[0].message.content

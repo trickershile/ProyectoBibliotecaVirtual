@@ -58,26 +58,24 @@ async def _shutdown():
     Cierre limpio de conexiones externas.
     """
     await close_mongo_client()
-
+    from app.database import cache_client
+    cache_client.close()
 REQUEST_COUNT = Counter("http_requests_total", "Total HTTP requests", ["service", "method", "path", "status"])
 REQUEST_LATENCY = Histogram("http_request_duration_seconds", "HTTP request latency in seconds", ["service", "method", "path"])
 app.mount("/metrics", make_asgi_app())
 
 @app.middleware("http")
 async def metrics_middleware(request, call_next):
-    """
-    Middleware de métricas (Prometheus).
-    """
     start = time.time()
+    response = None
     try:
         response = await call_next(request)
+        return response
     finally:
         duration = time.time() - start
-        status_code = getattr(locals().get("response", None), "status_code", 500)
+        status_code = response.status_code if response else 500
         REQUEST_COUNT.labels("ia_recommender", request.method, request.url.path, str(status_code)).inc()
         REQUEST_LATENCY.labels("ia_recommender", request.method, request.url.path).observe(duration)
-    return response
-
 
 @app.get("/ia/health")
 async def health():
