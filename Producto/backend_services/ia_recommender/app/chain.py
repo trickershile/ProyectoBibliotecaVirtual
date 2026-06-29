@@ -97,7 +97,7 @@ async def consultar_asesor_literario(historial_contexto: str, mensaje_usuario: s
             raise RuntimeError("groq_circuit_open")
         try:
             completion = await groq_client.chat.completions.create(
-                model="llama3-8b-8192",
+                model="llama-3.1-8b-instant",
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}

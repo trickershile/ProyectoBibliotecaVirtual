@@ -24,14 +24,14 @@ export const endpoints = {
     removeByUser: (userId, bookId) => `/wishlist/${userId}/remove/${bookId}`,
   },
   orders: {
-    checkout: '/orders/checkout',
-    byId: (orderId) => `/orders/${orderId}`,
-    byUser: (userId) => `/orders/user/${userId}`,
-    all: '/orders',
-    status: (orderId) => `/orders/${orderId}/status`,
-    cancel: (orderId) => `/orders/${orderId}/cancel`,
-    refund: (orderId) => `/orders/${orderId}/refund`,
-  },
+  checkout: '/orders/checkout',
+  byId: (orderId) => `/orders/${orderId}`,
+  byUser: (userId) => `/orders/user/${userId}`,
+  all: '/orders/',   // 👈 agregar slash final
+  status: (orderId) => `/orders/${orderId}/status`,
+  cancel: (orderId) => `/orders/${orderId}/cancel`,
+  refund: (orderId) => `/orders/${orderId}/refund`,
+},
   cart: {
     items: (userId) => `/cart/${userId}/items`,
     itemById: (userId, itemId) => `/cart/${userId}/items/${itemId}`,

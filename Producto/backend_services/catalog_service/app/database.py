@@ -8,12 +8,11 @@ from supabase import create_client, Client
 load_dotenv(dotenv_path=Path(__file__).resolve().parents[2] / ".env")
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
-if not SUPABASE_URL or not SUPABASE_KEY:
+if not SUPABASE_URL or not SUPABASE_SERVICE_ROLE_KEY:
     raise ValueError("Error: Faltan las credenciales de Supabase en el archivo .env")
-
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
 # --- CONFIGURACIÓN DE UPSTASH REDIS (FastLookup) ---
 def _normalize_redis_host(value: str | None) -> str | None:

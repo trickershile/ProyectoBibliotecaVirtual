@@ -308,7 +308,8 @@ async def route_search(request: Request, path: str):
     req = http_client.build_request(
         method=request.method,
         url=url_destino,
-        headers=request.headers.raw
+        headers=request.headers.raw,
+        params=request.query_params
     )
     response = await http_client.send(req, stream=True)
     return StreamingResponse(response.aiter_raw(), status_code=response.status_code, headers=response.headers)
