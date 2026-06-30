@@ -103,6 +103,8 @@ async def register_user(user_data: UserRegister):
             "nombre_completo": user_data.nombre_completo,
             "role": "socio"
         }
+        if user_data.direccion:
+            profile_data["direccion"] = user_data.direccion
         profile_response = await anyio.to_thread.run_sync(
             lambda: supabase.table("profiles").insert(profile_data).execute()
         )

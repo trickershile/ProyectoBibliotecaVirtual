@@ -8,6 +8,7 @@ class UserRegister(BaseModel):
     email: EmailStr          # Valida de forma nativa que el texto sea un correo real (ej: usuario@correo.com). Equivale a @Email en Java.
     password: str            # Tipo cadena de texto (String). Al no tener 'Optional', es obligatorio.
     nombre_completo: str     # Tipo cadena de texto. Obligatorio para registrar el perfil del socio.
+    direccion: Optional[str] = None
 
 # --- MODELO DE LOGIN (Mapea el Caso de Uso 1: Iniciar sesión) ---
 # Este DTO recibe únicamente las credenciales necesarias para autenticar al usuario contra Supabase.
@@ -25,7 +26,7 @@ class UserUpdate(BaseModel):
     # Si el cliente no lo envía, Python le asigna por defecto el valor 'None' (que es el 'null' de Java).
     nombre_completo: Optional[str] = None
     telefono: Optional[str] = None
-
+    direccion: Optional[str] = None
 # --- MODELO DE RESPUESTA SEGURA (Response DTO) ---
 # Esta es una de las mejores prácticas que tu profesor buscará. Por seguridad, JAMÁS debes devolver
 # la contraseña en las respuestas HTTP de tu API.
@@ -35,4 +36,6 @@ class UserResponse(BaseModel):
     email: EmailStr
     nombre_completo: str
     role: str                # Almacena si el usuario es 'socio' o 'admin' según la regla de negocio
-    created_at: str          # Fecha de creación formateada como texto
+    created_at: str  
+    direccion: Optional[str] = None
+            # Fecha de creación formateada como texto

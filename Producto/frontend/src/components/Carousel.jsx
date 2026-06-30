@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 
-const Carousel = () => {
-  const images = [
+const images = [
     {
       url: "https://images.unsplash.com/photo-1507842217343-583bb7270b66?q=80&w=1200&auto=format&fit=crop",
       title: "Explora nuestra Biblioteca",
@@ -19,6 +18,7 @@ const Carousel = () => {
     }
   ];
 
+const Carousel = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const nextSlide = () => {

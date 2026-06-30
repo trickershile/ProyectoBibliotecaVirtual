@@ -2,11 +2,16 @@ import apiClient from './apiClient';
 import { endpoints } from './endpoints';
 
 const getCurrentUserId = () => {
-  const storedUser = JSON.parse(localStorage.getItem('sb_user') || 'null');
-  if (!storedUser?.id) {
+  try {
+    const storedUser = JSON.parse(localStorage.getItem('sb_user') || 'null');
+    if (!storedUser?.id) {
+      throw new Error('Debes iniciar sesion para usar el carrito del backend.');
+    }
+    return storedUser.id;
+  } catch (e) {
+    if (e.message?.includes('Debes iniciar sesion')) throw e;
     throw new Error('Debes iniciar sesion para usar el carrito del backend.');
   }
-  return storedUser.id;
 };
 
 export const cartApi = {

@@ -1,29 +1,29 @@
 import { useState, useEffect } from 'react';
 
+const terminalLogs = [
+  { text: "INFO:     Conexión establecida con Nodo Central Maipú.", color: "text-green-400" },
+  { text: "INFO:     Sincronizando inventario de sedes físicas...", color: "text-green-400" },
+  { text: "ESTADO:   Sistemas en línea y disponibles para público.", color: "text-blue-400", mt: true },
+  
+  { text: "[CATÁLOGO] Resumen de Existencias Digitales:", color: "text-purple-400", mt: true },
+  { text: "➔ Textos de Química y Farmacia ... [ACTUALIZADO]", color: "text-gray-400", indent: true },
+  { text: "➔ Material Clínico de Apoyo ..... [DISPONIBLE]", color: "text-gray-400", indent: true },
+  { text: "➔ Catálogo de Literatura General .. [COMPLETO]", color: "text-gray-400", indent: true },
+
+  { text: "[SERVICIOS] Disponibilidad de Módulos:", color: "text-yellow-500", mt: true },
+  { text: "✔ Carrito de Compras y Pedidos .... OPERATIVO", color: "text-gray-300", indent: true },
+  { text: "✔ Descarga Segura de Previews ...... HABILITADA", color: "text-gray-300", indent: true },
+  { text: "✔ Asesor Virtual con IA ........... EN LÍNEA", color: "text-gray-300", indent: true },
+  { text: "✔ Módulo de Reseñas y Comunidad ... ACTIVO", color: "text-gray-300", indent: true },
+  
+  { text: "Nota: Las descargas de libros completos requieren inicio de sesión y validación de préstamo activo.", color: "text-gray-500", mt: true, isNote: true }
+];
+
 const AnimatedTerminal = () => {
   const [displayedLines, setDisplayedLines] = useState([]);
   const [currentLineText, setCurrentLineText] = useState("");
   const [lineIndex, setLineIndex] = useState(0);
   const [charIndex, setCharIndex] = useState(0);
-
-  const terminalLogs = [
-    { text: "INFO:     Conexión establecida con Nodo Central Maipú.", color: "text-green-400" },
-    { text: "INFO:     Sincronizando inventario de sedes físicas...", color: "text-green-400" },
-    { text: "ESTADO:   Sistemas en línea y disponibles para público.", color: "text-blue-400", mt: true },
-    
-    { text: "[CATÁLOGO] Resumen de Existencias Digitales:", color: "text-purple-400", mt: true },
-    { text: "➔ Textos de Química y Farmacia ... [ACTUALIZADO]", color: "text-gray-400", indent: true },
-    { text: "➔ Material Clínico de Apoyo ..... [DISPONIBLE]", color: "text-gray-400", indent: true },
-    { text: "➔ Catálogo de Literatura General .. [COMPLETO]", color: "text-gray-400", indent: true },
-
-    { text: "[SERVICIOS] Disponibilidad de Módulos:", color: "text-yellow-500", mt: true },
-    { text: "✔ Carrito de Compras y Pedidos .... OPERATIVO", color: "text-gray-300", indent: true },
-    { text: "✔ Descarga Segura de Previews ...... HABILITADA", color: "text-gray-300", indent: true },
-    { text: "✔ Asesor Virtual con IA ........... EN LÍNEA", color: "text-gray-300", indent: true },
-    { text: "✔ Módulo de Reseñas y Comunidad ... ACTIVO", color: "text-gray-300", indent: true },
-    
-    { text: "Nota: Las descargas de libros completos requieren inicio de sesión y validación de préstamo activo.", color: "text-gray-500", mt: true, isNote: true }
-  ];
 
   useEffect(() => {
     // Si todavía quedan líneas por escribir

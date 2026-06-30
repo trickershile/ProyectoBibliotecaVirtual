@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import sys
@@ -72,7 +73,7 @@ async def metrics_middleware(request, call_next):
     return response
 
 # Inyección del cliente relacional para auditoría de cajas y boletas
-supabase: Client = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
+supabase: Client = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_SERVICE_ROLE_KEY"))
 
 CATALOG_SERVICE_URL = os.getenv("CATALOG_SERVICE_URL", "http://127.0.0.1:8001")
 AUTH_SERVICE_URL = os.getenv("AUTH_SERVICE_URL", "http://127.0.0.1:8000")
@@ -147,29 +148,34 @@ async def procesar_compra_ecommerce(pedido: CheckoutRequest, authorization: str 
         orden_id = res_orden.data[0]["id"]
         
         # 3. Guardamos los detalles del carrito e interactuamos con el catálogo en paralelo
+        for item in pedido.items:
+            detalle_data = {
+                "orden_id": orden_id,
+                "libro_id": item.libro_id,
+                "cantidad": item.cantidad,
+                "precio_unitario": item.precio_unitario,
+                "tipo_item": item.tipo_item
+            }
+            supabase.table("orden_detalles").insert(detalle_data).execute()
+        
         async with httpx.AsyncClient() as client:
+            tasks = []
             for item in pedido.items:
-                # Insertamos el registro de auditoría de venta
-                detalle_data = {
-                    "orden_id": orden_id,
-                    "libro_id": item.libro_id,
-                    "cantidad": item.cantidad,
-                    "precio_unitario": item.precio_unitario,
-                    "tipo_item": item.tipo_item
-                }
-                supabase.table("orden_detalles").insert(detalle_data).execute()
-                
                 if item.tipo_item == "fisico":
                     payload_catalogo = {
                         "usuario_id": pedido.usuario_id,
                         "tipo_operacion": "compra_fisica",
                         "cantidad": item.cantidad
                     }
-                    await client.post(
-                        f"{CATALOG_SERVICE_URL}/catalog/books/{item.libro_id}/action",
-                        json=payload_catalogo,
-                        headers={"Authorization": authorization}
+                    tasks.append(
+                        client.post(
+                            f"{CATALOG_SERVICE_URL}/catalog/books/{item.libro_id}/action",
+                            json=payload_catalogo,
+                            headers={"Authorization": authorization}
+                        )
                     )
+            if tasks:
+                await asyncio.gather(*tasks)
         
         return {
             "status": "success",

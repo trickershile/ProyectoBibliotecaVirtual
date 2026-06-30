@@ -2,11 +2,16 @@ import apiClient from './apiClient';
 import { buildQueryString, endpoints } from './endpoints';
 
 const getCurrentUserId = () => {
-  const storedUser = JSON.parse(localStorage.getItem('sb_user') || 'null');
-  if (!storedUser?.id) {
+  try {
+    const storedUser = JSON.parse(localStorage.getItem('sb_user') || 'null');
+    if (!storedUser?.id) {
+      throw new Error('Debes iniciar sesión para usar pagos.');
+    }
+    return storedUser.id;
+  } catch (e) {
+    if (e.message?.includes('Debes iniciar sesión')) throw e;
     throw new Error('Debes iniciar sesión para usar pagos.');
   }
-  return storedUser.id;
 };
 
 const normalizePayment = (payment = {}) => ({

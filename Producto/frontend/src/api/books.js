@@ -116,7 +116,11 @@ const toBackendBookPayload = async (bookData = {}, currentBook = null) => {
 
 export const booksApi = {
   async getAll(params = {}) {
-    const books = await apiClient.get(`${endpoints.catalog.books}${buildQueryString()}`);
+    const searchParams = { ...params };
+    if (searchParams.categories && Array.isArray(searchParams.categories)) {
+      delete searchParams.categories;
+    }
+    const books = await apiClient.get(`${endpoints.catalog.books}${buildQueryString(searchParams)}`);
     const normalized = (Array.isArray(books) ? books : []).map(normalizeBook);
     return filterBooks(normalized, params);
   },
@@ -145,8 +149,14 @@ export const booksApi = {
     });
   },
 
-  async update(id, bookData) {
-    const currentBook = await this.getById(id);
+  async update(id, bookData, currentBook = null) {
+    if (!currentBook) {
+      try {
+        currentBook = await this.getById(id);
+      } catch {
+        currentBook = {};
+      }
+    }
     const payload = await toBackendBookPayload(bookData, currentBook);
     const book = await apiClient.patch(endpoints.catalog.bookById(id), payload);
     return normalizeBook(book);

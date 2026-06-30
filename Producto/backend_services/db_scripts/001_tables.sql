@@ -5,6 +5,7 @@ create table if not exists public.profiles (
   email text not null,
   nombre_completo text not null,
   telefono text null,
+  direccion text null,
   role text not null default 'socio',
   created_at timestamptz not null default now()
 );

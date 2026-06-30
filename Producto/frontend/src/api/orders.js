@@ -2,17 +2,22 @@ import apiClient from './apiClient';
 import { endpoints } from './endpoints';
 
 const getCurrentUserId = () => {
-  const storedUser = localStorage.getItem('sb_user');
-  if (!storedUser) {
+  try {
+    const storedUser = localStorage.getItem('sb_user');
+    if (!storedUser) {
+      throw new Error('Debes iniciar sesion para operar con pedidos.');
+    }
+
+    const user = JSON.parse(storedUser);
+    if (!user?.id) {
+      throw new Error('No se pudo identificar el usuario autenticado.');
+    }
+
+    return user.id;
+  } catch (e) {
+    if (e.message?.includes('Debes iniciar sesion') || e.message?.includes('No se pudo identificar')) throw e;
     throw new Error('Debes iniciar sesion para operar con pedidos.');
   }
-
-  const user = JSON.parse(storedUser);
-  if (!user?.id) {
-    throw new Error('No se pudo identificar el usuario autenticado.');
-  }
-
-  return user.id;
 };
 
 const normalizeOrderItem = (item = {}, book = null) => ({
@@ -38,17 +43,38 @@ const normalizeOrder = (order = {}, items = []) => ({
   items,
 });
 
-const loadBookSummary = async (bookId) => {
-  try {
-    const book = await apiClient.get(endpoints.catalog.bookById(bookId));
-    return {
-      title: book.titulo || book.title || `Libro #${bookId}`,
-      pickup_location: book.ubicacion_bodega || book.pickup_location || 'Sin sede',
-      image_url: book.image_url || book.imagenes?.[0] || book.url_digital_preview || null,
-    };
-  } catch {
-    return null;
-  }
+const loadBookSummaries = async (bookIds) => {
+  const uniqueIds = [...new Set(bookIds.filter(Boolean))];
+  if (uniqueIds.length === 0) return {};
+
+  const summaries = {};
+  await Promise.all(uniqueIds.map(async (bookId) => {
+    try {
+      const book = await apiClient.get(endpoints.catalog.bookById(bookId));
+      summaries[bookId] = {
+        title: book.titulo || book.title || `Libro #${bookId}`,
+        pickup_location: book.ubicacion_bodega || book.pickup_location || 'Sin sede',
+        image_url: book.image_url || book.imagenes?.[0] || book.url_digital_preview || null,
+      };
+    } catch {
+      summaries[bookId] = null;
+    }
+  }));
+  return summaries;
+};
+
+const normalizeOrderWithBooks = (order, bookSummaries = {}) => {
+  const rawItems = order?.items || [];
+  const items = rawItems.map((item) => {
+    const bookId = item.libro_id;
+    const book = bookSummaries[bookId];
+    return normalizeOrderItem(item, book);
+  });
+
+  return normalizeOrder({
+    ...(order?.orden || order || {}),
+    despacho: order?.despacho || null,
+  }, items);
 };
 
 export const ordersApi = {
@@ -72,32 +98,37 @@ export const ordersApi = {
   async getById(orderId) {
     const response = await apiClient.get(endpoints.orders.byId(orderId));
     const rawItems = response?.items || [];
-
-    const books = await Promise.all(rawItems.map((item) => loadBookSummary(item.libro_id)));
-    const items = rawItems.map((item, index) => normalizeOrderItem(item, books[index]));
-
-    return normalizeOrder({
-      ...(response?.orden || {}),
-      despacho: response?.despacho || null,
-    }, items);
+    const bookIds = rawItems.map((item) => item.libro_id).filter(Boolean);
+    const bookSummaries = await loadBookSummaries(bookIds);
+    return normalizeOrderWithBooks(response, bookSummaries);
   },
 
   async getMy() {
     const userId = getCurrentUserId();
     const orders = await apiClient.get(endpoints.orders.byUser(userId));
-    const normalizedOrders = await Promise.all((orders || []).map((order) => this.getById(order.id || order._id)));
-    return normalizedOrders.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    return this._normalizeOrders(orders || []);
   },
 
   async getByUser(userId) {
     const orders = await apiClient.get(endpoints.orders.byUser(userId));
-    return Promise.all((orders || []).map((order) => this.getById(order.id || order._id)));
+    return this._normalizeOrders(orders || []);
   },
 
   async getAll() {
     const orders = await apiClient.get(endpoints.orders.all);
-    const normalizedOrders = await Promise.all((orders || []).map((order) => this.getById(order.id || order._id)));
-    return normalizedOrders.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    return this._normalizeOrders(orders || []);
+  },
+
+  async _normalizeOrders(orders) {
+    if (orders.length === 0) return [];
+
+    const allBookIds = orders.flatMap(
+      (order) => (order?.items || []).map((item) => item.libro_id).filter(Boolean)
+    );
+    const bookSummaries = allBookIds.length > 0 ? await loadBookSummaries(allBookIds) : {};
+
+    const normalized = orders.map((order) => normalizeOrderWithBooks(order, bookSummaries));
+    return normalized.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   },
 
   updateStatus(orderId, estado) {

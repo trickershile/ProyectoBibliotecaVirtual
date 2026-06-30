@@ -27,7 +27,7 @@ export const endpoints = {
   checkout: '/orders/checkout',
   byId: (orderId) => `/orders/${orderId}`,
   byUser: (userId) => `/orders/user/${userId}`,
-  all: '/orders/',   // 👈 agregar slash final
+  all: '/orders',
   status: (orderId) => `/orders/${orderId}/status`,
   cancel: (orderId) => `/orders/${orderId}/cancel`,
   refund: (orderId) => `/orders/${orderId}/refund`,

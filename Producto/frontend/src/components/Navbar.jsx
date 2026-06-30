@@ -1,8 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { clearAuthStorage, signOut } from '../lib/supabase';
 import { getCartCount } from '../lib/cart';
 import iconoNavbar from '../public/icono-navbar.png';
+
+const getFromStorage = (key) => {
+  try {
+    const value = localStorage.getItem(key);
+    return value ? JSON.parse(value) : null;
+  } catch {
+    return null;
+  }
+};
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -11,18 +20,24 @@ const Navbar = () => {
   const [cartCount, setCartCount] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const animTimerRef = useRef(null);
 
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem('sb_user') || 'null');
-    const profile = JSON.parse(localStorage.getItem('sb_profile') || 'null');
+    const user = getFromStorage('sb_user');
+    const profile = getFromStorage('sb_profile');
     setSbUser(user);
     setSbProfile(profile);
     
     const updateCartCount = async () => {
-      const count = await getCartCount();
-      setCartCount(count);
-      setIsAnimating(true);
-      setTimeout(() => setIsAnimating(false), 300);
+      try {
+        const count = await getCartCount();
+        setCartCount(count);
+        setIsAnimating(true);
+        if (animTimerRef.current) clearTimeout(animTimerRef.current);
+        animTimerRef.current = setTimeout(() => setIsAnimating(false), 300);
+      } catch (err) {
+        console.error('Error al actualizar contador del carrito:', err);
+      }
     };
     
     updateCartCount();
@@ -30,8 +45,8 @@ const Navbar = () => {
     globalThis.addEventListener('cart-updated', updateCartCount);
     
     const handleStorageChange = () => {
-      const updatedUser = JSON.parse(localStorage.getItem('sb_user') || 'null');
-      const updatedProfile = JSON.parse(localStorage.getItem('sb_profile') || 'null');
+      const updatedUser = getFromStorage('sb_user');
+      const updatedProfile = getFromStorage('sb_profile');
       setSbUser(updatedUser);
       setSbProfile(updatedProfile);
       updateCartCount();
@@ -42,6 +57,7 @@ const Navbar = () => {
       globalThis.removeEventListener('storage', updateCartCount);
       globalThis.removeEventListener('cart-updated', updateCartCount);
       globalThis.removeEventListener('sb_user_updated', handleStorageChange);
+      if (animTimerRef.current) clearTimeout(animTimerRef.current);
     };
   }, []);
 

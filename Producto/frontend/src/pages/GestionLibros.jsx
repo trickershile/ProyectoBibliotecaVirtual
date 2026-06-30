@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { booksApi } from '../api/books';
 import { ordersApi } from '../api/orders';
 import { paymentsApi } from '../api/payments';
@@ -86,6 +86,23 @@ const GestionLibros = () => {
   const [editingBook, setEditingBook] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [imageFile, setImageFile] = useState(null);
+  const blobUrlRef = useRef(null);
+
+  const handleFileSelect = (file) => {
+    if (blobUrlRef.current) {
+      URL.revokeObjectURL(blobUrlRef.current);
+    }
+    setImageFile(file);
+    blobUrlRef.current = file ? URL.createObjectURL(file) : null;
+  };
+
+  useEffect(() => {
+    return () => {
+      if (blobUrlRef.current) {
+        URL.revokeObjectURL(blobUrlRef.current);
+      }
+    };
+  }, []);
   const [trackingForm, setTrackingForm] = useState({
     orden_id: '',
     direccion_destino: '',
@@ -102,7 +119,8 @@ const GestionLibros = () => {
     is_new: true,
   });
 
-  const sbProfile = JSON.parse(localStorage.getItem('sb_profile') || 'null');
+  let sbProfile = null;
+  try { sbProfile = JSON.parse(localStorage.getItem('sb_profile')); } catch {}
   const isAdmin = sbProfile?.role === 'admin';
 
   useEffect(() => {
@@ -1185,7 +1203,7 @@ const GestionLibros = () => {
                     <div className="mb-3 flex h-40 items-center justify-center overflow-hidden rounded-2xl border-2 border-[#aacde2] bg-[#f7fcff]">
                       {imageFile || editingBook?.image_url ? (
                         <img
-                          src={imageFile ? URL.createObjectURL(imageFile) : withApiOrigin(editingBook.image_url)}
+                          src={blobUrlRef.current || withApiOrigin(editingBook.image_url)}
                           alt="Vista previa de portada"
                           className="w-full h-full object-cover"
                         />
@@ -1194,7 +1212,7 @@ const GestionLibros = () => {
                       )}
                     </div>
                     <div className="relative">
-                      <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => setImageFile(e.target.files[0])} />
+                      <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => handleFileSelect(e.target.files[0])} />
                       <div className="flex items-center gap-2 rounded-xl border-2 border-[#aacde2] bg-[#f7fcff] px-4 py-2 text-[10px] font-semibold italic text-[#5e7890]">
                         <Upload className="w-3 h-3" /> {imageFile ? imageFile.name : 'Click para subir imagen...'}
                       </div>

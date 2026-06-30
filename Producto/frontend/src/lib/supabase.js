@@ -34,10 +34,15 @@ const getStoredAccessToken = () => localStorage.getItem(ACCESS_TOKEN_KEY) || loc
 
 const parseJsonResponse = async (response) => {
   const text = await response.text();
-  const data = text ? JSON.parse(text) : null;
+  let data = null;
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    data = null;
+  }
 
   if (!response.ok) {
-    throw new Error(data?.detail || data?.message || 'No se pudo completar la solicitud.');
+    throw new Error(data?.detail || data?.message || `Error ${response.status}`);
   }
 
   return data;
@@ -162,13 +167,14 @@ export const signUp = async (email, password, metadata = {}) => {
     metadata.username ||
     email.split('@')[0];
 
+  const body = { email, password, nombre_completo: nombreCompleto };
+  if (metadata.address) {
+    body.direccion = metadata.address;
+  }
+
   const data = await authFetch('/auth/register', {
     method: 'POST',
-    body: JSON.stringify({
-      email,
-      password,
-      nombre_completo: nombreCompleto,
-    }),
+    body: JSON.stringify(body),
   });
 
   return normalizeProfile(data, data);
@@ -179,13 +185,15 @@ export const getProfile = async () => {
     method: 'GET',
   });
 
-  const storedUser = JSON.parse(localStorage.getItem(USER_KEY) || 'null');
+  let storedUser = null;
+  try { storedUser = JSON.parse(localStorage.getItem(USER_KEY)); } catch {}
   return normalizeProfile(data, storedUser);
 };
 
 export const updateProfile = async (_userId, updates = {}) => {
-  const currentProfile = JSON.parse(localStorage.getItem(PROFILE_KEY) || 'null');
-  const currentUser = JSON.parse(localStorage.getItem(USER_KEY) || 'null');
+  let currentProfile = null, currentUser = null;
+  try { currentProfile = JSON.parse(localStorage.getItem(PROFILE_KEY)); } catch {}
+  try { currentUser = JSON.parse(localStorage.getItem(USER_KEY)); } catch {}
 
   const fullName =
     joinFullName(updates.first_name, updates.last_name) ||
@@ -200,6 +208,9 @@ export const updateProfile = async (_userId, updates = {}) => {
   }
   if (updates.phone_number || updates.telefono) {
     payload.telefono = updates.phone_number || updates.telefono;
+  }
+  if (updates.address) {
+    payload.direccion = updates.address;
   }
 
   const data = await authFetch('/auth/profile', {

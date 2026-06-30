@@ -108,21 +108,24 @@ def _book_id_to_int(book_id: str) -> int:
 
 
 def _recompute_book_rating(book_id_int: int):
-    reviews = (
-        supabase.table("reviews")
-        .select("rating")
-        .eq("libro_id", book_id_int)
-        .eq("estado", "approved")
-        .execute()
-        .data
-        or []
-    )
-    if not reviews:
-        supabase.table("books").update({"calificacion_promedio": 0}).eq("id", book_id_int).execute()
-        return
+    try:
+        reviews = (
+            supabase.table("reviews")
+            .select("rating")
+            .eq("libro_id", book_id_int)
+            .eq("estado", "approved")
+            .execute()
+            .data
+            or []
+        )
+        if not reviews:
+            supabase.table("books").update({"calificacion_promedio": 0}).eq("id", book_id_int).execute()
+            return
 
-    avg = sum(int(r.get("rating") or 0) for r in reviews) / max(len(reviews), 1)
-    supabase.table("books").update({"calificacion_promedio": round(avg, 2)}).eq("id", book_id_int).execute()
+        avg = sum(int(r.get("rating") or 0) for r in reviews) / max(len(reviews), 1)
+        supabase.table("books").update({"calificacion_promedio": round(avg, 2)}).eq("id", book_id_int).execute()
+    except Exception as e:
+        logger.error("Error recalculando rating para libro %s: %s", book_id_int, e)
 
 
 @app.get("/reviews/health")
@@ -146,16 +149,19 @@ def list_book_reviews(
     - reseñas con estado='approved' para consumo directo del frontend.
     """
     book_id_int = _book_id_to_int(book_id)
-    response = (
-        supabase.table("reviews")
-        .select("*")
-        .eq("libro_id", book_id_int)
-        .eq("estado", "approved")
-        .order("id", desc=True)
-        .range(offset, offset + limit - 1)
-        .execute()
-    )
-    return response.data or []
+    try:
+        response = (
+            supabase.table("reviews")
+            .select("*")
+            .eq("libro_id", book_id_int)
+            .eq("estado", "approved")
+            .order("id", desc=True)
+            .range(offset, offset + limit - 1)
+            .execute()
+        )
+        return response.data or []
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/reviews/books/{book_id}", response_model=ReviewResponse, status_code=status.HTTP_201_CREATED)
@@ -169,9 +175,14 @@ def create_review(book_id: str, data: ReviewCreate, authorization: str = Header(
     identity = _verify_token(authorization)
     book_id_int = _book_id_to_int(book_id)
 
-    book = supabase.table("books").select("id").eq("id", book_id_int).single().execute().data
-    if not book:
-        raise HTTPException(status_code=404, detail="Libro no encontrado.")
+    try:
+        book = supabase.table("books").select("id").eq("id", book_id_int).single().execute().data
+        if not book:
+            raise HTTPException(status_code=404, detail="Libro no encontrado.")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
     payload = {
         "libro_id": book_id_int,
@@ -204,28 +215,33 @@ def update_review(review_id: str, data: ReviewUpdate, authorization: str = Heade
     except Exception:
         raise HTTPException(status_code=400, detail="ID de reseña inválido.")
 
-    current = supabase.table("reviews").select("*").eq("id", review_id_int).single().execute().data
-    if not current:
-        raise HTTPException(status_code=404, detail="Reseña no encontrada.")
-    if identity.get("role") != "admin" and current.get("usuario_id") != identity.get("id"):
-        raise HTTPException(status_code=403, detail="No autorizado.")
+    try:
+        current = supabase.table("reviews").select("*").eq("id", review_id_int).single().execute().data
+        if not current:
+            raise HTTPException(status_code=404, detail="Reseña no encontrada.")
+        if identity.get("role") != "admin" and current.get("usuario_id") != identity.get("id"):
+            raise HTTPException(status_code=403, detail="No autorizado.")
 
-    payload = data.model_dump(exclude_none=True)
-    if not payload:
-        raise HTTPException(status_code=400, detail="No hay campos para actualizar.")
+        payload = data.model_dump(exclude_none=True)
+        if not payload:
+            raise HTTPException(status_code=400, detail="No hay campos para actualizar.")
 
-    if current.get("estado") == "approved" and identity.get("role") != "admin":
-        payload["estado"] = "pending"
-        payload["motivo"] = None
+        if current.get("estado") == "approved" and identity.get("role") != "admin":
+            payload["estado"] = "pending"
+            payload["motivo"] = None
 
-    updated = supabase.table("reviews").update(payload).eq("id", review_id_int).execute()
-    if not updated.data:
-        raise HTTPException(status_code=404, detail="Reseña no encontrada.")
+        updated = supabase.table("reviews").update(payload).eq("id", review_id_int).execute()
+        if not updated.data:
+            raise HTTPException(status_code=404, detail="Reseña no encontrada.")
 
-    if current.get("estado") == "approved" and payload.get("estado") == "pending":
-        _recompute_book_rating(int(current.get("libro_id")))
+        if current.get("estado") == "approved" and payload.get("estado") == "pending":
+            _recompute_book_rating(int(current.get("libro_id")))
 
-    return updated.data[0]
+        return updated.data[0]
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.delete("/reviews/{review_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -239,16 +255,21 @@ def delete_review(review_id: str, authorization: str = Header(default="")):
     except Exception:
         raise HTTPException(status_code=400, detail="ID de reseña inválido.")
 
-    current = supabase.table("reviews").select("*").eq("id", review_id_int).single().execute().data
-    if not current:
-        raise HTTPException(status_code=404, detail="Reseña no encontrada.")
-    if identity.get("role") != "admin" and current.get("usuario_id") != identity.get("id"):
-        raise HTTPException(status_code=403, detail="No autorizado.")
+    try:
+        current = supabase.table("reviews").select("*").eq("id", review_id_int).single().execute().data
+        if not current:
+            raise HTTPException(status_code=404, detail="Reseña no encontrada.")
+        if identity.get("role") != "admin" and current.get("usuario_id") != identity.get("id"):
+            raise HTTPException(status_code=403, detail="No autorizado.")
 
-    supabase.table("reviews").delete().eq("id", review_id_int).execute()
-    if current.get("estado") == "approved":
-        _recompute_book_rating(int(current.get("libro_id")))
-    return
+        supabase.table("reviews").delete().eq("id", review_id_int).execute()
+        if current.get("estado") == "approved":
+            _recompute_book_rating(int(current.get("libro_id")))
+        return
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/reviews/moderation/pending", response_model=List[ReviewResponse])
@@ -257,15 +278,18 @@ def list_pending_reviews(authorization: str = Header(default="")):
     Caso de uso (Admin): ver cola de moderación.
     """
     _require_admin(authorization)
-    response = (
-        supabase.table("reviews")
-        .select("*")
-        .eq("estado", "pending")
-        .order("id", desc=True)
-        .limit(100)
-        .execute()
-    )
-    return response.data or []
+    try:
+        response = (
+            supabase.table("reviews")
+            .select("*")
+            .eq("estado", "pending")
+            .order("id", desc=True)
+            .limit(100)
+            .execute()
+        )
+        return response.data or []
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.patch("/reviews/{review_id}/moderate", response_model=ReviewResponse)
@@ -282,17 +306,22 @@ def moderate_review(review_id: str, data: ReviewModeration, authorization: str =
     except Exception:
         raise HTTPException(status_code=400, detail="ID de reseña inválido.")
 
-    current = supabase.table("reviews").select("*").eq("id", review_id_int).single().execute().data
-    if not current:
-        raise HTTPException(status_code=404, detail="Reseña no encontrada.")
+    try:
+        current = supabase.table("reviews").select("*").eq("id", review_id_int).single().execute().data
+        if not current:
+            raise HTTPException(status_code=404, detail="Reseña no encontrada.")
 
-    payload = {"estado": data.estado, "motivo": data.motivo}
-    updated = supabase.table("reviews").update(payload).eq("id", review_id_int).execute()
-    if not updated.data:
-        raise HTTPException(status_code=404, detail="Reseña no encontrada.")
+        payload = {"estado": data.estado, "motivo": data.motivo}
+        updated = supabase.table("reviews").update(payload).eq("id", review_id_int).execute()
+        if not updated.data:
+            raise HTTPException(status_code=404, detail="Reseña no encontrada.")
 
-    _recompute_book_rating(int(current.get("libro_id")))
-    return updated.data[0]
+        _recompute_book_rating(int(current.get("libro_id")))
+        return updated.data[0]
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 if __name__ == "__main__":

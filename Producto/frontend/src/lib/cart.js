@@ -52,7 +52,8 @@ export const getCart = async () => {
 };
 
 export const addCartItem = async (book) => {
-  const storedUser = JSON.parse(localStorage.getItem('sb_user') || 'null');
+  let storedUser = null;
+  try { storedUser = JSON.parse(localStorage.getItem('sb_user')); } catch {}
   if (!storedUser?.id) {
     return { added: false, reason: 'unauthenticated' };
   }

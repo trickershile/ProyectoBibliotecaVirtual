@@ -24,7 +24,10 @@ const Catalogo = () => {
   });
 
   useEffect(() => {
-    fetchBooks();
+    const timer = setTimeout(() => {
+      fetchBooks();
+    }, 300);
+    return () => clearTimeout(timer);
   }, [filters, searchTerm]);
 
   useEffect(() => {
@@ -121,7 +124,8 @@ const Catalogo = () => {
   };
 
   const fetchWishlist = async () => {
-    const sbUser = JSON.parse(localStorage.getItem('sb_user') || 'null');
+    let sbUser = null;
+    try { sbUser = JSON.parse(localStorage.getItem('sb_user')); } catch {}
     if (!sbUser) {
       setWishlistIds([]);
       return;
@@ -140,26 +144,33 @@ const Catalogo = () => {
   };
 
   const addToCart = async (book) => {
-    const result = await addCartItem(book);
-    if (result.added && result.updated) {
+    try {
+      const result = await addCartItem(book);
+      if (result.added && result.updated) {
+        window.dispatchEvent(new CustomEvent('show-toast', { 
+          detail: { message: `"${book.title}" ya estaba en el carrito y se aumentó la cantidad.` } 
+        }));
+      } else if (result.added) {
+        window.dispatchEvent(new CustomEvent('show-toast', { 
+          detail: { message: `"${book.title}" fue añadido al sistema de compra.` } 
+        }));
+      } else if (result.reason === 'unauthenticated') {
+        window.dispatchEvent(new CustomEvent('show-toast', { 
+          detail: { message: 'Debes iniciar sesión para usar el carrito.' } 
+        }));
+      } else if (result.reason === 'duplicate') {
+        window.dispatchEvent(new CustomEvent('show-toast', { 
+          detail: { message: 'El ejemplar ya se encuentra en el carrito.' } 
+        }));
+      } else {
+        window.dispatchEvent(new CustomEvent('show-toast', { 
+          detail: { message: 'No se pudo agregar el ejemplar al carrito.' } 
+        }));
+      }
+    } catch (error) {
+      console.error('Error al agregar al carrito:', error);
       window.dispatchEvent(new CustomEvent('show-toast', { 
-        detail: { message: `"${book.title}" ya estaba en el carrito y se aumentó la cantidad.` } 
-      }));
-    } else if (result.added) {
-      window.dispatchEvent(new CustomEvent('show-toast', { 
-        detail: { message: `"${book.title}" fue añadido al sistema de compra.` } 
-      }));
-    } else if (result.reason === 'unauthenticated') {
-      window.dispatchEvent(new CustomEvent('show-toast', { 
-        detail: { message: 'Debes iniciar sesión para usar el carrito.' } 
-      }));
-    } else if (result.reason === 'duplicate') {
-      window.dispatchEvent(new CustomEvent('show-toast', { 
-        detail: { message: 'El ejemplar ya se encuentra en el carrito.' } 
-      }));
-    } else {
-      window.dispatchEvent(new CustomEvent('show-toast', { 
-        detail: { message: 'No se pudo agregar el ejemplar al carrito.' } 
+        detail: { message: 'Error al conectar con el carrito.' } 
       }));
     }
   };
@@ -184,7 +195,8 @@ const Catalogo = () => {
   const wishlistSet = useMemo(() => new Set(wishlistIds), [wishlistIds]);
 
   const toggleWishlist = async (book) => {
-    const sbUser = JSON.parse(localStorage.getItem('sb_user') || 'null');
+    let sbUser = null;
+    try { sbUser = JSON.parse(localStorage.getItem('sb_user')); } catch {}
     const bookId = book._id || book.id;
     if (!sbUser) {
       window.dispatchEvent(new CustomEvent('show-toast', {

@@ -74,7 +74,7 @@ const MapsModule = ({ mode, pickupBranch, onPickupBranchChange, shippingCoords, 
     if (mode === 'delivery' && (!shippingCoords?.lat || !shippingCoords?.lng)) {
       onShippingCoordsChange({ lat: DEFAULT_CENTER[0], lng: DEFAULT_CENTER[1] });
     }
-  }, [mode]);
+  }, [mode, shippingCoords, onShippingCoordsChange]);
 
   return (
     <div className="bg-black/30 border border-gray-800 rounded-2xl overflow-hidden">

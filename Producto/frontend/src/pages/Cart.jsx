@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { ShoppingCart, Trash2, ArrowRight, CreditCard, Clock, Info, CheckCircle2, Download, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ordersApi } from '../api/orders';
@@ -35,23 +35,36 @@ const Cart = () => {
   };
 
   const removeItem = async (cartItemId) => {
-    const updatedCart = await removeCartItem(cartItemId);
-    setCartItems(updatedCart);
-    window.dispatchEvent(new CustomEvent('show-toast', { 
-      detail: { message: 'Ejemplar eliminado del carrito.' } 
-    }));
+    try {
+      const updatedCart = await removeCartItem(cartItemId);
+      setCartItems(updatedCart);
+      window.dispatchEvent(new CustomEvent('show-toast', { 
+        detail: { message: 'Ejemplar eliminado del carrito.' } 
+      }));
+    } catch (error) {
+      console.error('Error al eliminar del carrito:', error);
+      window.dispatchEvent(new CustomEvent('show-toast', { 
+        detail: { message: 'No se pudo eliminar el ejemplar.' } 
+      }));
+    }
   };
 
   const calculateTotal = () => {
     return cartItems.reduce((total, item) => total + ((item.price || 0) * (item.quantity || 1)), 0);
   };
 
+  const locationCount = useMemo(
+    () => new Set(cartItems.map(i => i.pickup_location)).size,
+    [cartItems]
+  );
+
   const handleConfirmOrder = async () => {
     setSubmittingOrder(true);
     let checkoutResponse = null;
     let paymentIntent = null;
     try {
-      const sbUser = JSON.parse(localStorage.getItem('sb_user') || 'null');
+      let sbUser = null;
+      try { sbUser = JSON.parse(localStorage.getItem('sb_user')); } catch {} 
       if (!sbUser) {
         window.dispatchEvent(new CustomEvent('show-toast', { 
           detail: { message: 'Debes iniciar sesión para confirmar el pedido.' } 
@@ -281,7 +294,7 @@ const Cart = () => {
                   </div>
                   <div className="flex justify-between text-[11px]">
                     <span className="text-[#7f5c40]">Sedes involucradas</span>
-                    <span className="font-bold text-[#5a3f2b]">{new Set(cartItems.map(i => i.pickup_location)).size}</span>
+                    <span className="font-bold text-[#5a3f2b]">{locationCount}</span>
                   </div>
                 </div>
 

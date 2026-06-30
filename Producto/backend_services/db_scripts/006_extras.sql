@@ -56,3 +56,6 @@ create policy "book_covers_admin_delete"
 on storage.objects for delete
 to authenticated
 using (bucket_id = 'book-covers' and public.is_admin());
+
+-- Migración: agregar columna direccion a profiles (para bases existentes)
+alter table public.profiles add column if not exists direccion text null;

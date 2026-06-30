@@ -2,6 +2,7 @@ import Hero from '../components/Hero';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import Carousel from '../components/Carousel';
+import BibliotecaMap from '../components/BibliotecaMap';
 
 const Home = () => {
   const mockBooks = [
@@ -134,6 +135,9 @@ const Home = () => {
           ))}
         </div>
       </section>
+
+      {/* MAPA BIBLIOTECAS */}
+      <BibliotecaMap />
 
       {/* CALL TO ACTION FINAL */}
       <section className="mx-4 rounded-3xl border-2 border-[#9faf92] bg-[#eef4e8] p-12 text-center shadow-[0_20px_48px_rgba(79,95,73,0.16)]">

@@ -29,8 +29,9 @@ const Reviews = () => {
     comment: '',
   });
 
-  const sbUser = JSON.parse(localStorage.getItem('sb_user') || 'null');
-  const sbProfile = JSON.parse(localStorage.getItem('sb_profile') || 'null');
+  let sbUser = null, sbProfile = null;
+  try { sbUser = JSON.parse(localStorage.getItem('sb_user')); } catch {}
+  try { sbProfile = JSON.parse(localStorage.getItem('sb_profile')); } catch {}
   const isAdmin = sbProfile?.role === 'admin';
 
   useEffect(() => {

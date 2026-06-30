@@ -260,8 +260,11 @@ async def route_auth(request: Request, path: str):
         headers=request.headers.raw,
         content=body
     )
-    response = await http_client.send(req, stream=True)
-    return StreamingResponse(response.aiter_raw(), status_code=response.status_code, headers=response.headers)
+    try:
+        response = await http_client.send(req, stream=True)
+        return StreamingResponse(response.aiter_raw(), status_code=response.status_code, headers=response.headers)
+    except httpx.RequestError as e:
+        raise HTTPException(status_code=503, detail=f"Auth service no disponible: {e}")
 
 
 # =========================
@@ -291,15 +294,17 @@ async def route_catalog(request: Request, path: str):
         content=body
     )
     
-    # Enviamos la petición de manera asíncrona al catalog_service
-    response = await http_client.send(req, stream=True)
-    
-    # Devolvemos la respuesta tal cual la entregó el microservicio al Frontend
-    return StreamingResponse(
-        response.aiter_raw(),
-        status_code=response.status_code,
-        headers=response.headers
-    )
+    try:
+        # Enviamos la petición de manera asíncrona al catalog_service
+        response = await http_client.send(req, stream=True)
+        # Devolvemos la respuesta tal cual la entregó el microservicio al Frontend
+        return StreamingResponse(
+            response.aiter_raw(),
+            status_code=response.status_code,
+            headers=response.headers
+        )
+    except httpx.RequestError as e:
+        raise HTTPException(status_code=503, detail=f"Catalog service no disponible: {e}")
 
 
 @app.api_route("/search/{path:path}", methods=["GET"])
@@ -311,8 +316,11 @@ async def route_search(request: Request, path: str):
         headers=request.headers.raw,
         params=request.query_params
     )
-    response = await http_client.send(req, stream=True)
-    return StreamingResponse(response.aiter_raw(), status_code=response.status_code, headers=response.headers)
+    try:
+        response = await http_client.send(req, stream=True)
+        return StreamingResponse(response.aiter_raw(), status_code=response.status_code, headers=response.headers)
+    except httpx.RequestError as e:
+        raise HTTPException(status_code=503, detail=f"Search service no disponible: {e}")
 
 
 # =========================
@@ -406,8 +414,11 @@ async def route_ecommerce_orders(request: Request, path: str):
         headers=request.headers.raw, 
         content=body
     )
-    response = await http_client.send(req, stream=True)
-    return StreamingResponse(response.aiter_raw(), status_code=response.status_code, headers=response.headers)
+    try:
+        response = await http_client.send(req, stream=True)
+        return StreamingResponse(response.aiter_raw(), status_code=response.status_code, headers=response.headers)
+    except httpx.RequestError as e:
+        raise HTTPException(status_code=503, detail=f"Orders service no disponible: {e}")
 
 @app.api_route("/shipping/{path:path}", methods=["GET", "POST", "PATCH", "DELETE"])
 async def route_shipping_and_maps(request: Request, path: str):
@@ -428,8 +439,11 @@ async def route_shipping_and_maps(request: Request, path: str):
         headers=request.headers.raw, 
         content=body
     )
-    response = await http_client.send(req, stream=True)
-    return StreamingResponse(response.aiter_raw(), status_code=response.status_code, headers=response.headers)
+    try:
+        response = await http_client.send(req, stream=True)
+        return StreamingResponse(response.aiter_raw(), status_code=response.status_code, headers=response.headers)
+    except httpx.RequestError as e:
+        raise HTTPException(status_code=503, detail=f"Shipping service no disponible: {e}")
 
 @app.api_route("/inventory/{path:path}", methods=["GET", "POST"])
 async def route_inventory_sync(request: Request, path: str):
@@ -450,8 +464,11 @@ async def route_inventory_sync(request: Request, path: str):
         headers=request.headers.raw, 
         content=body
     )
-    response = await http_client.send(req, stream=True)
-    return StreamingResponse(response.aiter_raw(), status_code=response.status_code, headers=response.headers)
+    try:
+        response = await http_client.send(req, stream=True)
+        return StreamingResponse(response.aiter_raw(), status_code=response.status_code, headers=response.headers)
+    except httpx.RequestError as e:
+        raise HTTPException(status_code=503, detail=f"Inventory service no disponible: {e}")
 
 @app.api_route("/payments/{path:path}", methods=["GET", "POST", "DELETE"])
 async def route_payments(request: Request, path: str):
@@ -470,8 +487,11 @@ async def route_payments(request: Request, path: str):
         headers=request.headers.raw,
         content=body
     )
-    response = await http_client.send(req, stream=True)
-    return StreamingResponse(response.aiter_raw(), status_code=response.status_code, headers=response.headers)
+    try:
+        response = await http_client.send(req, stream=True)
+        return StreamingResponse(response.aiter_raw(), status_code=response.status_code, headers=response.headers)
+    except httpx.RequestError as e:
+        raise HTTPException(status_code=503, detail=f"Payment service no disponible: {e}")
 
 @app.api_route("/cart/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
 async def route_cart(request: Request, path: str):
@@ -490,8 +510,11 @@ async def route_cart(request: Request, path: str):
         headers=request.headers.raw,
         content=body
     )
-    response = await http_client.send(req, stream=True)
-    return StreamingResponse(response.aiter_raw(), status_code=response.status_code, headers=response.headers)
+    try:
+        response = await http_client.send(req, stream=True)
+        return StreamingResponse(response.aiter_raw(), status_code=response.status_code, headers=response.headers)
+    except httpx.RequestError as e:
+        raise HTTPException(status_code=503, detail=f"Cart service no disponible: {e}")
 
 
 @app.api_route("/wishlist/{path:path}", methods=["GET", "POST", "DELETE"])
@@ -511,8 +534,11 @@ async def route_wishlist(request: Request, path: str):
         headers=request.headers.raw,
         content=body
     )
-    response = await http_client.send(req, stream=True)
-    return StreamingResponse(response.aiter_raw(), status_code=response.status_code, headers=response.headers)
+    try:
+        response = await http_client.send(req, stream=True)
+        return StreamingResponse(response.aiter_raw(), status_code=response.status_code, headers=response.headers)
+    except httpx.RequestError as e:
+        raise HTTPException(status_code=503, detail=f"Catalog service no disponible: {e}")
 
 @app.api_route("/notifications/{path:path}", methods=["GET", "POST"])
 async def route_notifications(request: Request, path: str):
@@ -524,8 +550,11 @@ async def route_notifications(request: Request, path: str):
         headers=request.headers.raw,
         content=body
     )
-    response = await http_client.send(req, stream=True)
-    return StreamingResponse(response.aiter_raw(), status_code=response.status_code, headers=response.headers)
+    try:
+        response = await http_client.send(req, stream=True)
+        return StreamingResponse(response.aiter_raw(), status_code=response.status_code, headers=response.headers)
+    except httpx.RequestError as e:
+        raise HTTPException(status_code=503, detail=f"Notification service no disponible: {e}")
 
 
 @app.api_route("/delivery/{path:path}", methods=["GET"])
@@ -543,8 +572,11 @@ async def route_delivery(request: Request, path: str):
         url=url_destino,
         headers=request.headers.raw
     )
-    response = await http_client.send(req, stream=True)
-    return StreamingResponse(response.aiter_raw(), status_code=response.status_code, headers=response.headers)
+    try:
+        response = await http_client.send(req, stream=True)
+        return StreamingResponse(response.aiter_raw(), status_code=response.status_code, headers=response.headers)
+    except httpx.RequestError as e:
+        raise HTTPException(status_code=503, detail=f"Delivery service no disponible: {e}")
 
 
 @app.api_route("/reviews/{path:path}", methods=["GET", "POST", "PATCH", "DELETE"])
@@ -567,8 +599,11 @@ async def route_reviews(request: Request, path: str):
         headers=request.headers.raw,
         content=body
     )
-    response = await http_client.send(req, stream=True)
-    return StreamingResponse(response.aiter_raw(), status_code=response.status_code, headers=response.headers)
+    try:
+        response = await http_client.send(req, stream=True)
+        return StreamingResponse(response.aiter_raw(), status_code=response.status_code, headers=response.headers)
+    except httpx.RequestError as e:
+        raise HTTPException(status_code=503, detail=f"Reviews service no disponible: {e}")
 if __name__ == "__main__":
     import uvicorn
     # El API Gateway corre en el puerto principal 8080 (La entrada pública del sistema)

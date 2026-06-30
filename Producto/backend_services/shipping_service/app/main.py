@@ -66,7 +66,7 @@ async def metrics_middleware(request, call_next):
     return response
 
 # Conector relacional para el registro de rutas y auditorías
-supabase: Client = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
+supabase: Client = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_SERVICE_ROLE_KEY"))
 AUTH_SERVICE_URL = os.getenv("AUTH_SERVICE_URL", "http://127.0.0.1:8000")
 http_client = httpx.Client(timeout=5)
 

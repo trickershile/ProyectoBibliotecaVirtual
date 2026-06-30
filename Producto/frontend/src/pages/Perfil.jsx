@@ -18,7 +18,8 @@ import { statusStyles, theme } from '../lib/theme';
 const Perfil = () => {
   const [orders, setOrders] = useState([]);
   const [userData, setUserData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loadingProfile, setLoadingProfile] = useState(true);
+  const [loadingOrders, setLoadingOrders] = useState(true);
   const [error, setError] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [wishlist, setWishlist] = useState([]);
@@ -31,6 +32,8 @@ const Perfil = () => {
     phone_number: ''
   });
 
+  const loading = loadingProfile || loadingOrders;
+
   useEffect(() => {
     fetchProfileData();
     fetchOrders();
@@ -40,7 +43,8 @@ const Perfil = () => {
 
   const fetchProfileData = async () => {
     try {
-      const sbUser = JSON.parse(localStorage.getItem('sb_user') || 'null');
+      let sbUser = null;
+      try { sbUser = JSON.parse(localStorage.getItem('sb_user')); } catch {}
       if (!sbUser) return;
 
       const data = await getProfile(sbUser.id);
@@ -54,7 +58,7 @@ const Perfil = () => {
     } catch (err) {
       console.error("Error al cargar perfil:", err);
     } finally {
-      setLoading(false);
+      setLoadingProfile(false);
     }
   };
 
@@ -66,7 +70,7 @@ const Perfil = () => {
       console.error("Error al cargar pedidos:", err);
       setError("No se pudo cargar el historial de pedidos.");
     } finally {
-      setLoading(false);
+      setLoadingOrders(false);
     }
   };
 
@@ -121,8 +125,8 @@ const Perfil = () => {
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
     try {
-      setLoading(true);
-      const sbUser = JSON.parse(localStorage.getItem('sb_user') || 'null');
+      let sbUser = null;
+      try { sbUser = JSON.parse(localStorage.getItem('sb_user')); } catch {}
       if (!sbUser) return;
 
       const updated = await updateProfile(sbUser.id, editForm);
@@ -131,8 +135,6 @@ const Perfil = () => {
       window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: 'Perfil actualizado correctamente.' } }));
     } catch (err) {
       console.error("Error al actualizar:", err);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -332,7 +334,7 @@ const Perfil = () => {
             ) : (
               <div className="space-y-4">
                 {orders.map((order) => (
-                  <div key={order._id} className="group overflow-hidden rounded-2xl border-2 border-[#b9926d] bg-[#fffaf4] transition-all hover:border-[#9d7553]">
+                  <div key={order._id || order.id} className="group overflow-hidden rounded-2xl border-2 border-[#b9926d] bg-[#fffaf4] transition-all hover:border-[#9d7553]">
                     <div className="flex flex-wrap items-center justify-between gap-4 border-b-2 border-[#d2b08f] bg-[#f8ede2] p-4">
                       <div className="flex items-center gap-4">
                         <div className="rounded-lg bg-[#ead4bd] p-2">

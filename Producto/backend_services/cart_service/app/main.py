@@ -100,8 +100,11 @@ def get_cart_items(usuario_id: str, authorization: str = Header(default="")):
     Lista items del carrito de un usuario.
     """
     _require_owner_or_admin(usuario_id, authorization)
-    response = supabase.table("cart_items").select("*").eq("usuario_id", usuario_id).execute()
-    return response.data or []
+    try:
+        response = supabase.table("cart_items").select("*").eq("usuario_id", usuario_id).execute()
+        return response.data or []
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/cart/{usuario_id}/items", response_model=CartItemResponse, status_code=status.HTTP_201_CREATED)
@@ -116,30 +119,35 @@ def add_cart_item(usuario_id: str, item: CartItemCreate, authorization: str = He
     if item.cantidad <= 0:
         raise HTTPException(status_code=400, detail="La cantidad debe ser mayor a 0.")
 
-    existing = (
-        supabase.table("cart_items")
-        .select("*")
-        .match({"usuario_id": usuario_id, "libro_id": item.libro_id, "tipo_item": item.tipo_item})
-        .execute()
-    )
-
-    if existing.data:
-        current = existing.data[0]
-        nuevo_valor = int(current.get("cantidad", 0)) + item.cantidad
-        updated = (
+    try:
+        existing = (
             supabase.table("cart_items")
-            .update({"cantidad": nuevo_valor, "precio_unitario": item.precio_unitario})
-            .eq("id", current["id"])
+            .select("*")
+            .match({"usuario_id": usuario_id, "libro_id": item.libro_id, "tipo_item": item.tipo_item})
             .execute()
         )
-        return updated.data[0]
 
-    payload = item.model_dump()
-    payload["usuario_id"] = usuario_id
-    inserted = supabase.table("cart_items").insert(payload).execute()
-    if not inserted.data:
-        raise HTTPException(status_code=400, detail="No se pudo agregar el ítem al carrito.")
-    return inserted.data[0]
+        if existing.data:
+            current = existing.data[0]
+            nuevo_valor = int(current.get("cantidad", 0)) + item.cantidad
+            updated = (
+                supabase.table("cart_items")
+                .update({"cantidad": nuevo_valor, "precio_unitario": item.precio_unitario})
+                .eq("id", current["id"])
+                .execute()
+            )
+            return updated.data[0]
+
+        payload = item.model_dump()
+        payload["usuario_id"] = usuario_id
+        inserted = supabase.table("cart_items").insert(payload).execute()
+        if not inserted.data:
+            raise HTTPException(status_code=400, detail="No se pudo agregar el ítem al carrito.")
+        return inserted.data[0]
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.put("/cart/{usuario_id}/items/{item_id}", response_model=CartItemResponse)
@@ -156,14 +164,19 @@ def update_cart_item(usuario_id: str, item_id: str, update: CartItemUpdate, auth
     except Exception:
         raise HTTPException(status_code=400, detail="ID de ítem inválido.")
 
-    current = supabase.table("cart_items").select("*").eq("id", item_id_int).single().execute().data
-    if not current or current.get("usuario_id") != usuario_id:
-        raise HTTPException(status_code=404, detail="Ítem no encontrado.")
+    try:
+        current = supabase.table("cart_items").select("*").eq("id", item_id_int).single().execute().data
+        if not current or current.get("usuario_id") != usuario_id:
+            raise HTTPException(status_code=404, detail="Ítem no encontrado.")
 
-    updated = supabase.table("cart_items").update({"cantidad": update.cantidad}).eq("id", item_id_int).execute()
-    if not updated.data:
-        raise HTTPException(status_code=404, detail="Ítem no encontrado.")
-    return updated.data[0]
+        updated = supabase.table("cart_items").update({"cantidad": update.cantidad}).eq("id", item_id_int).execute()
+        if not updated.data:
+            raise HTTPException(status_code=404, detail="Ítem no encontrado.")
+        return updated.data[0]
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.delete("/cart/{usuario_id}/items/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -177,12 +190,17 @@ def delete_cart_item(usuario_id: str, item_id: str, authorization: str = Header(
     except Exception:
         raise HTTPException(status_code=400, detail="ID de ítem inválido.")
 
-    current = supabase.table("cart_items").select("*").eq("id", item_id_int).single().execute().data
-    if not current or current.get("usuario_id") != usuario_id:
-        raise HTTPException(status_code=404, detail="Ítem no encontrado.")
+    try:
+        current = supabase.table("cart_items").select("*").eq("id", item_id_int).single().execute().data
+        if not current or current.get("usuario_id") != usuario_id:
+            raise HTTPException(status_code=404, detail="Ítem no encontrado.")
 
-    supabase.table("cart_items").delete().eq("id", item_id_int).execute()
-    return
+        supabase.table("cart_items").delete().eq("id", item_id_int).execute()
+        return
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.delete("/cart/{usuario_id}/clear", status_code=status.HTTP_204_NO_CONTENT)
@@ -191,8 +209,11 @@ def clear_cart(usuario_id: str, authorization: str = Header(default="")):
     Vacía el carrito completo del usuario.
     """
     _require_owner_or_admin(usuario_id, authorization)
-    supabase.table("cart_items").delete().eq("usuario_id", usuario_id).execute()
-    return
+    try:
+        supabase.table("cart_items").delete().eq("usuario_id", usuario_id).execute()
+        return
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/cart/{usuario_id}/checkout")
@@ -206,7 +227,10 @@ async def checkout_cart(usuario_id: str, data: CartCheckoutRequest, authorizatio
     3) Si la orden se crea, borra los items del carrito.
     """
     _require_owner_or_admin(usuario_id, authorization)
-    items_response = supabase.table("cart_items").select("*").eq("usuario_id", usuario_id).execute()
+    try:
+        items_response = supabase.table("cart_items").select("*").eq("usuario_id", usuario_id).execute()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
     items = items_response.data or []
     if not items:
         raise HTTPException(status_code=400, detail="El carrito está vacío.")
@@ -225,17 +249,23 @@ async def checkout_cart(usuario_id: str, data: CartCheckoutRequest, authorizatio
         ]
     }
 
-    async with httpx.AsyncClient() as client:
-        response = await client.post(
-            f"{ORDERS_SERVICE_URL}/orders/checkout",
-            json=payload,
-            headers={"Authorization": authorization}
-        )
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{ORDERS_SERVICE_URL}/orders/checkout",
+                json=payload,
+                headers={"Authorization": authorization}
+            )
+    except httpx.RequestError as e:
+        raise HTTPException(status_code=503, detail=f"Orders service no disponible: {e}")
 
     if response.status_code >= 400:
         raise HTTPException(status_code=400, detail=response.text)
 
-    supabase.table("cart_items").delete().eq("usuario_id", usuario_id).execute()
+    try:
+        supabase.table("cart_items").delete().eq("usuario_id", usuario_id).execute()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
     return response.json()
 
 

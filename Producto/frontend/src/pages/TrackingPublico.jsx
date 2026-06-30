@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Loader2, MapPin, Search, Truck } from 'lucide-react';
 import { shippingApi } from '../api/shipping';
@@ -12,6 +12,7 @@ const TrackingPublico = () => {
   const [loading, setLoading] = useState(false);
   const [tracking, setTracking] = useState(null);
   const [error, setError] = useState('');
+  const isFirstRender = useRef(true);
 
   const fetchTracking = useCallback(async (rawCode, persistSearch = false) => {
     const trimmedCode = rawCode.trim().toUpperCase();
@@ -41,9 +42,10 @@ const TrackingPublico = () => {
   useEffect(() => {
     const normalizedCode = initialCode.trim().toUpperCase();
     setCode(normalizedCode);
-    if (normalizedCode) {
+    if (normalizedCode && isFirstRender.current) {
+      isFirstRender.current = false;
       fetchTracking(normalizedCode);
-    } else {
+    } else if (!normalizedCode) {
       setTracking(null);
       setError('');
     }

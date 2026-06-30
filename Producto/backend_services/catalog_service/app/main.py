@@ -74,15 +74,9 @@ async def metrics_middleware(request, call_next):
 AUTH_SERVICE_URL = os.getenv("AUTH_SERVICE_URL", "http://127.0.0.1:8000")
 BOOK_COVERS_BUCKET = os.getenv("BOOK_COVERS_BUCKET", "book-covers")
 http_client = httpx.Client(timeout=5)
+auth_async_client = httpx.AsyncClient(timeout=5)
 
-def _verify_token(authorization: str):
-    """
-    Verifica JWT consultando auth_service.
-
-    Nota arquitectónica:
-    - Se hace por HTTP para mantener los servicios desacoplados del SDK de Supabase Auth
-      (un solo lugar implementa la lógica de verify).
-    """
+def _verify_token_sync(authorization: str):
     if not authorization:
         raise HTTPException(status_code=401, detail="Falta el token de autorización.")
     try:
@@ -95,11 +89,24 @@ def _verify_token(authorization: str):
     return response.json()
 
 
+async def _verify_token(authorization: str):
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Falta el token de autorización.")
+    try:
+        response = await auth_async_client.get(f"{AUTH_SERVICE_URL}/auth/verify", headers={"Authorization": authorization})
+    except Exception:
+        raise HTTPException(status_code=503, detail="Auth service no disponible.")
+
+    if response.status_code != 200:
+        raise HTTPException(status_code=401, detail="Token inválido o expirado.")
+    return response.json()
+
+
 def _verify_admin(authorization: str):
     """
     Regla de negocio: solo un usuario con role=admin puede ejecutar operaciones administrativas del catálogo.
     """
-    data = _verify_token(authorization)
+    data = _verify_token_sync(authorization)
     if data.get("role") != "admin":
         raise HTTPException(status_code=403, detail="No autorizado.")
     return data
@@ -109,7 +116,7 @@ def _verify_owner_or_admin(user_id: str, authorization: str):
     """
     Regla de negocio: el recurso privado solo puede ser consultado por su dueño o por un admin.
     """
-    data = _verify_token(authorization)
+    data = _verify_token_sync(authorization)
     if data.get("role") != "admin" and data.get("id") != user_id:
         raise HTTPException(status_code=403, detail="No autorizado.")
     return data
@@ -247,7 +254,7 @@ def process_book_action(
     Seguridad:
     - Si no es admin, el usuario del token debe coincidir con operacion.usuario_id.
     """
-    verification = _verify_token(authorization)
+    verification = _verify_token_sync(authorization)
     is_admin = verification.get("role") == "admin"
     if not is_admin and verification.get("id") != operacion.usuario_id:
         raise HTTPException(status_code=403, detail="No autorizado.")
@@ -273,7 +280,9 @@ def process_book_action(
             raise HTTPException(status_code=400, detail="No queda inventario físico disponible para despacho de este libro.")
         
         nuevo_stock = book["stock_fisico"] - operacion.cantidad
-        supabase.table("books").update({"stock_fisico": nuevo_stock}).eq("id", book_id_int).execute()
+        result = supabase.table("books").update({"stock_fisico": nuevo_stock}).eq("id", book_id_int).eq("stock_fisico", book["stock_fisico"]).execute()
+        if not result.data:
+            raise HTTPException(status_code=409, detail="Conflicto de inventario: el stock cambió entre la lectura y la actualización. Intente nuevamente.")
         cache_client.delete("all_books")
         return {"status": "success", "message": f"Compra física procesada con éxito. Despacho autorizado al ID: {operacion.usuario_id}."}
         
@@ -525,16 +534,21 @@ def _wishlist_response(usuario_id: str):
         or []
     )
 
+    if not entries:
+        return []
+
+    book_ids = [e.get("libro_id") for e in entries if e.get("libro_id")]
+    if not book_ids:
+        return []
+
+    books_map = {}
+    books_response = supabase.table("books").select("*").in_("id", book_ids).execute()
+    for b in (books_response.data or []):
+        books_map[b["id"]] = b
+
     results = []
     for entry in entries:
-        book = (
-            supabase.table("books")
-            .select("*")
-            .eq("id", entry.get("libro_id"))
-            .single()
-            .execute()
-            .data
-        )
+        book = books_map.get(entry.get("libro_id"))
         if book:
             results.append({**entry, "book": book})
     return results
@@ -542,7 +556,7 @@ def _wishlist_response(usuario_id: str):
 
 @app.get("/wishlist/me")
 def get_my_wishlist(authorization: str = Header(default="")):
-    identity = _verify_token(authorization)
+    identity = _verify_token_sync(authorization)
     return _wishlist_response(identity.get("id"))
 
 
@@ -554,7 +568,7 @@ def get_user_wishlist(usuario_id: str, authorization: str = Header(default="")):
 
 @app.post("/wishlist/me/add/{book_id}", status_code=status.HTTP_201_CREATED)
 def add_my_wishlist_item(book_id: str, authorization: str = Header(default="")):
-    identity = _verify_token(authorization)
+    identity = _verify_token_sync(authorization)
     return add_user_wishlist_item(identity.get("id"), book_id, authorization)
 
 
@@ -586,7 +600,7 @@ def add_user_wishlist_item(usuario_id: str, book_id: str, authorization: str = H
 
 @app.delete("/wishlist/me/remove/{book_id}", status_code=status.HTTP_204_NO_CONTENT)
 def remove_my_wishlist_item(book_id: str, authorization: str = Header(default="")):
-    identity = _verify_token(authorization)
+    identity = _verify_token_sync(authorization)
     return remove_user_wishlist_item(identity.get("id"), book_id, authorization)
 
 
