@@ -30,7 +30,9 @@ const Reviews = () => {
   });
 
   let sbUser = null, sbProfile = null;
+  // eslint-disable-next-line no-empty
   try { sbUser = JSON.parse(localStorage.getItem('sb_user')); } catch {}
+  // eslint-disable-next-line no-empty
   try { sbProfile = JSON.parse(localStorage.getItem('sb_profile')); } catch {}
   const isAdmin = sbProfile?.role === 'admin';
 

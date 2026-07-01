@@ -18,6 +18,7 @@ const DEFAULT_MESSAGES = [
 
 const AsistenteIA = () => {
   let sbUser = null;
+  // eslint-disable-next-line no-empty
   try { sbUser = JSON.parse(localStorage.getItem('sb_user')); } catch {}
   const storageKey = useMemo(() => `ia_session_${sbUser?.id || 'anon'}`, [sbUser?.id]);
   const [messages, setMessages] = useState(DEFAULT_MESSAGES);
@@ -39,6 +40,7 @@ const AsistenteIA = () => {
     setSessionId(storedSessionId);
     const historyKey = `${storageKey}_${storedSessionId}_messages`;
     let storedMessages = null;
+    // eslint-disable-next-line no-empty
     try { storedMessages = JSON.parse(localStorage.getItem(historyKey)); } catch {}
     setMessages(Array.isArray(storedMessages) && storedMessages.length > 0 ? storedMessages : DEFAULT_MESSAGES);
 

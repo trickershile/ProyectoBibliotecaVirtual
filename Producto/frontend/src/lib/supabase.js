@@ -186,13 +186,16 @@ export const getProfile = async () => {
   });
 
   let storedUser = null;
+  // eslint-disable-next-line no-empty
   try { storedUser = JSON.parse(localStorage.getItem(USER_KEY)); } catch {}
   return normalizeProfile(data, storedUser);
 };
 
 export const updateProfile = async (_userId, updates = {}) => {
   let currentProfile = null, currentUser = null;
+  // eslint-disable-next-line no-empty
   try { currentProfile = JSON.parse(localStorage.getItem(PROFILE_KEY)); } catch {}
+  // eslint-disable-next-line no-empty
   try { currentUser = JSON.parse(localStorage.getItem(USER_KEY)); } catch {}
 
   const fullName =

@@ -1,12 +1,105 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { Send, Bot, User, Wifi, WifiOff } from 'lucide-react';
 import iconoChatbot from '../public/icono-chatbot.png';
+import { buildIaWebSocketUrl } from '../api/ia';
+
+const DEFAULT_MESSAGE = {
+  id: 'welcome',
+  role: 'assistant',
+  content: 'Hola, soy el asistente virtual. ¿En qué puedo ayudarte?',
+};
+
+const getStoredUser = () => {
+  try {
+    return JSON.parse(localStorage.getItem('sb_user'));
+  } catch {
+    return null;
+  }
+};
 
 const Chat = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [messages, setMessages] = useState([DEFAULT_MESSAGE]);
+  const [input, setInput] = useState('');
+  const [isConnected, setIsConnected] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [sbUser, setSbUser] = useState(getStoredUser);
+  const socketRef = useRef(null);
+  const messagesEndRef = useRef(null);
 
-  const toggleChat = () => {
-    setIsOpen(!isOpen);
+  useEffect(() => {
+    const handleAuthChange = () => setSbUser(getStoredUser());
+    window.addEventListener('sb_user_updated', handleAuthChange);
+    window.addEventListener('storage', handleAuthChange);
+    return () => {
+      window.removeEventListener('sb_user_updated', handleAuthChange);
+      window.removeEventListener('storage', handleAuthChange);
+    };
+  }, []);
+
+  const connect = useCallback(() => {
+    const user = getStoredUser();
+    if (!user?.id) return;
+
+    const token = localStorage.getItem('sb_access_token') || localStorage.getItem('token');
+    const socket = new WebSocket(
+      buildIaWebSocketUrl(user.id, { token })
+    );
+
+    socketRef.current = socket;
+
+    socket.onopen = () => setIsConnected(true);
+
+    socket.onmessage = (event) => {
+      setMessages((current) => [
+        ...current,
+        {
+          id: `assistant-${Date.now()}`,
+          role: 'assistant',
+          content: String(event.data),
+        },
+      ]);
+      setIsSending(false);
+    };
+
+    socket.onerror = () => {
+      setIsConnected(false);
+      setIsSending(false);
+    };
+
+    socket.onclose = () => {
+      setIsConnected(false);
+      setIsSending(false);
+    };
+  }, []);
+
+  useEffect(() => {
+    socketRef.current?.close();
+    connect();
+    return () => {
+      socketRef.current?.close();
+    };
+  }, [sbUser?.id, connect]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  const handleSend = (e) => {
+    e.preventDefault();
+    const trimmed = input.trim();
+    if (!trimmed || !socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) return;
+
+    socketRef.current.send(trimmed);
+    setMessages((current) => [
+      ...current,
+      { id: `user-${Date.now()}`, role: 'user', content: trimmed },
+    ]);
+    setInput('');
+    setIsSending(true);
   };
+
+  const toggleChat = () => setIsOpen(!isOpen);
 
   return (
     <div className="fixed bottom-4 right-4 z-50 font-mono sm:bottom-5 sm:right-5">
@@ -32,28 +125,53 @@ const Chat = () => {
           </button>
         </div>
 
+        {/* Status */}
+        <div className={`flex items-center justify-center gap-1.5 px-3 py-1 text-[9px] font-bold uppercase tracking-widest text-center ${isConnected ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}`}>
+          {isConnected ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
+          {isConnected ? 'Conectado' : sbUser?.id ? 'Desconectado' : 'Inicia sesión para chatear'}
+        </div>
+
         {/* Messages */}
         <div className="flex-grow p-3 space-y-3 overflow-y-auto bg-[#121212]">
-          <div className="flex">
-            <div className="bg-gray-700 text-white p-2 text-xs max-w-xs">
-              <p>Hola, soy el asistente virtual. ¿En qué puedo ayudarte?</p>
+          {messages.map((msg) => (
+            <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div className={`p-2 text-xs max-w-xs flex gap-1.5 ${msg.role === 'user' ? 'bg-purple-600 text-white' : 'bg-gray-700 text-white'}`}>
+                {msg.role === 'user' ? (
+                  <User className="w-3 h-3 mt-0.5 shrink-0" />
+                ) : (
+                  <Bot className="w-3 h-3 mt-0.5 shrink-0" />
+                )}
+                <p>{msg.content}</p>
+              </div>
             </div>
-          </div>
-          <div className="flex justify-end">
-            <div className="bg-purple-600 text-white p-2 text-xs max-w-xs">
-              <p>Tengo una pregunta sobre un libro.</p>
-            </div>
-          </div>
+          ))}
+          <div ref={messagesEndRef} />
         </div>
 
         {/* Input */}
-        <div className="p-2 bg-[#1e1e1e] border-t-2 border-gray-800">
-          <input 
-            type="text" 
-            placeholder="Escribe tu mensaje..." 
-            className="w-full bg-black text-white p-2 text-xs border-2 border-t-gray-800 border-l-gray-800 border-r-gray-300 border-b-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500"
-          />
-        </div>
+        <form onSubmit={handleSend} className="p-2 bg-[#1e1e1e] border-t-2 border-gray-800">
+          <div className="flex gap-2">
+            <input 
+              type="text" 
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder={!sbUser?.id ? 'Inicia sesión para chatear' : isConnected ? 'Escribe tu mensaje...' : 'Conectando...'} 
+              disabled={!isConnected || isSending}
+              className="flex-1 bg-black text-white p-2 text-xs border-2 border-t-gray-800 border-l-gray-800 border-r-gray-300 border-b-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
+            />
+            <button
+              type="submit"
+              disabled={!isConnected || isSending || !input.trim()}
+              className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 border-2 border-t-purple-400 border-l-purple-400 border-r-purple-800 border-b-purple-800 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSending ? (
+                <span className="text-xs">...</span>
+              ) : (
+                <Send className="w-4 h-4" />
+              )}
+            </button>
+          </div>
+        </form>
       </div>
 
       {/* Chat Toggle Button */}

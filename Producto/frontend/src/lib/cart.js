@@ -8,7 +8,8 @@ const enrichCartItem = async (item = {}) => {
   if (bookId) {
     try {
       book = await booksApi.getById(bookId);
-    } catch {
+    } catch (err) {
+      console.warn('Error al enriquecer item del carrito:', err);
       book = null;
     }
   }
@@ -53,6 +54,7 @@ export const getCart = async () => {
 
 export const addCartItem = async (book) => {
   let storedUser = null;
+  // eslint-disable-next-line no-empty
   try { storedUser = JSON.parse(localStorage.getItem('sb_user')); } catch {}
   if (!storedUser?.id) {
     return { added: false, reason: 'unauthenticated' };

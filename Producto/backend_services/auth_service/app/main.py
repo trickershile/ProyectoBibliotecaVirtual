@@ -124,7 +124,10 @@ async def register_user(user_data: UserRegister):
                 await anyio.to_thread.run_sync(lambda: supabase.auth.admin.delete_user(user_id))
             except Exception:
                 logger.exception("auth_user_cleanup_failed")
-        raise HTTPException(status_code=400, detail=str(e))
+        error_msg = str(e)
+        if "429" in error_msg or "Too Many Requests" in error_msg:
+            raise HTTPException(status_code=429, detail="Demasiados intentos de registro. Espera unos minutos e inténtalo de nuevo.")
+        raise HTTPException(status_code=400, detail=error_msg)
 
 
 # --- CASO DE USO 1: INICIAR SESIÓN ---

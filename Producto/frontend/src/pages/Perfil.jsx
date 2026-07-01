@@ -44,6 +44,7 @@ const Perfil = () => {
   const fetchProfileData = async () => {
     try {
       let sbUser = null;
+      // eslint-disable-next-line no-empty
       try { sbUser = JSON.parse(localStorage.getItem('sb_user')); } catch {}
       if (!sbUser) return;
 
@@ -126,6 +127,7 @@ const Perfil = () => {
     e.preventDefault();
     try {
       let sbUser = null;
+      // eslint-disable-next-line no-empty
       try { sbUser = JSON.parse(localStorage.getItem('sb_user')); } catch {}
       if (!sbUser) return;
 
@@ -341,7 +343,10 @@ const Perfil = () => {
                           <Clock className="w-4 h-4 text-[#8f6443]" />
                         </div>
                         <div>
-                          <p className="text-[10px] font-black uppercase tracking-tighter text-[#5a3f2b]">Solicitud #{order._id?.substr(-6) || order.id}</p>
+                          {/* ⬇️ LÍNEA CORREGIDA DE MANERA DEFENSIVA ⬇️ */}
+                          <p className="text-[10px] font-black uppercase tracking-tighter text-[#5a3f2b]">
+                            Solicitud #{order._id ? String(order._id).slice(-6) : (order.id ? String(order.id).slice(-6) : 'S/N')}
+                          </p>
                           <p className="text-[8px] font-bold text-[#9d7553]">{new Date(order.created_at).toLocaleDateString()} {new Date(order.created_at).toLocaleTimeString()}</p>
                         </div>
                       </div>

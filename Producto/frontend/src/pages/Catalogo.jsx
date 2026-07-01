@@ -5,7 +5,7 @@ import { searchApi } from '../api/search';
 import { wishlistApi } from '../api/wishlist';
 import { withApiOrigin } from '../lib/supabase';
 import { addCartItem } from '../lib/cart';
-import { statusStyles, theme } from '../lib/theme';
+import { theme } from '../lib/theme';
 
 const Catalogo = () => {
   const [books, setBooks] = useState([]);
@@ -125,6 +125,7 @@ const Catalogo = () => {
 
   const fetchWishlist = async () => {
     let sbUser = null;
+    // eslint-disable-next-line no-empty
     try { sbUser = JSON.parse(localStorage.getItem('sb_user')); } catch {}
     if (!sbUser) {
       setWishlistIds([]);
@@ -196,6 +197,7 @@ const Catalogo = () => {
 
   const toggleWishlist = async (book) => {
     let sbUser = null;
+    // eslint-disable-next-line no-empty
     try { sbUser = JSON.parse(localStorage.getItem('sb_user')); } catch {}
     const bookId = book._id || book.id;
     if (!sbUser) {

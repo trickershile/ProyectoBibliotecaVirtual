@@ -4,7 +4,7 @@ const Footer = () => {
   return (
     <footer className="border-t-2 border-[#aa7f5d] bg-[#263445] py-12 text-[#f6efe6]">
       <div className="w-full px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
           <div className="col-span-1 md:col-span-2">
             <h2 className="mb-4 font-mono text-2xl font-bold uppercase tracking-tighter text-[#f3dfca]">
               BIBLIOTECA VIRTUAL
@@ -15,10 +15,21 @@ const Footer = () => {
             </p>
           </div>
           <div>
-            <h3 className="mb-4 font-mono text-lg font-bold uppercase tracking-widest text-[#f3dfca]">Enlaces</h3>
+            <h3 className="mb-4 font-mono text-lg font-bold uppercase tracking-widest text-[#f3dfca]">Navegación</h3>
             <ul className="space-y-2 font-mono text-sm">
               <li><Link to="/" className="text-[#d7e2ee] transition hover:text-[#8fc27a]">Inicio</Link></li>
               <li><Link to="/catalogo" className="text-[#d7e2ee] transition hover:text-[#8fc27a]">Catálogo</Link></li>
+              <li><Link to="/asistente" className="text-[#d7e2ee] transition hover:text-[#8fc27a]">Asistente IA</Link></li>
+              <li><Link to="/resenas" className="text-[#d7e2ee] transition hover:text-[#8fc27a]">Reseñas</Link></li>
+            </ul>
+          </div>
+          <div>
+            <h3 className="mb-4 font-mono text-lg font-bold uppercase tracking-widest text-[#f3dfca]">Servicios</h3>
+            <ul className="space-y-2 font-mono text-sm">
+              <li><Link to="/tracking" className="text-[#d7e2ee] transition hover:text-[#8fc27a]">Tracking</Link></li>
+              <li><Link to="/contacto" className="text-[#d7e2ee] transition hover:text-[#8fc27a]">Contacto</Link></li>
+              <li><Link to="/carrito" className="text-[#d7e2ee] transition hover:text-[#8fc27a]">Carrito</Link></li>
+
             </ul>
           </div>
           <div>

@@ -32,20 +32,7 @@ import {
   formatPaymentStatus,
   formatTrackingStatus,
 } from '../lib/labels';
-import { statusStyles, theme } from '../lib/theme';
-
-const STATUS_STYLES = {
-  pagado: statusStyles.success,
-  pendiente: statusStyles.warning,
-  cancelado: statusStyles.danger,
-  reembolsado: statusStyles.accent,
-  confirmed: statusStyles.success,
-  approved: statusStyles.success,
-  rejected: statusStyles.danger,
-  en_preparacion: statusStyles.warning,
-  en_ruta: statusStyles.info,
-  entregado: statusStyles.success,
-};
+import { theme } from '../lib/theme';
 
 const DASHBOARD_STATUS_STYLES = {
   pagado: 'border-[#a9cdbb] bg-[#eff9f3] text-[#4f7b67]',
@@ -60,7 +47,6 @@ const DASHBOARD_STATUS_STYLES = {
   entregado: 'border-[#a9cdbb] bg-[#eff9f3] text-[#4f7b67]',
 };
 
-const getStatusClasses = (status) => STATUS_STYLES[status] || statusStyles.info;
 const getDashboardStatusClasses = (status) => DASHBOARD_STATUS_STYLES[status] || 'border-[#b9d8ea] bg-[#f1f9fe] text-[#4f7898]';
 const getPercent = (value, total) => (total > 0 ? Math.min(100, Math.round((value / total) * 100)) : 0);
 
@@ -120,6 +106,7 @@ const GestionLibros = () => {
   });
 
   let sbProfile = null;
+  // eslint-disable-next-line no-empty
   try { sbProfile = JSON.parse(localStorage.getItem('sb_profile')); } catch {}
   const isAdmin = sbProfile?.role === 'admin';
 

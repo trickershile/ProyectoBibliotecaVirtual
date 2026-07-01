@@ -64,6 +64,7 @@ const Cart = () => {
     let paymentIntent = null;
     try {
       let sbUser = null;
+      // eslint-disable-next-line no-empty
       try { sbUser = JSON.parse(localStorage.getItem('sb_user')); } catch {} 
       if (!sbUser) {
         window.dispatchEvent(new CustomEvent('show-toast', { 
